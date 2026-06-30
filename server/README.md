@@ -125,6 +125,15 @@ src/
   `audit_logs:read`, `organizations:manage`); the client renders only the tabs
   the signed-in admin is allowed to see.
 
+## Phase 6B — User Dashboard
+
+- Self-service **account settings** on the user dashboard: edit display name,
+  **change password** (revokes other sessions), and **change email** (confirmed
+  via a link to the new address).
+- Combined with the existing cards (2FA, active sessions, connected OAuth
+  accounts, recent activity), the user dashboard now covers profile, password,
+  2FA, sessions, and connected accounts end to end.
+
 ## Getting started
 
 ```bash

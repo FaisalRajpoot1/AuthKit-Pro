@@ -19,6 +19,7 @@ interface AuthContextValue {
   isInitializing: boolean;
   hasPermission: (key: string) => boolean;
   hasRole: (name: string) => boolean;
+  refresh: () => Promise<void>;
   login: (values: LoginFormValues) => Promise<LoginResult>;
   completeTwoFactor: (input: TwoFactorLoginInput) => Promise<void>;
   register: (values: RegisterFormValues) => Promise<void>;
@@ -104,12 +105,13 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       isInitializing,
       hasPermission: (key: string) => permissions.includes(key),
       hasRole: (name: string) => roles.includes(name),
+      refresh: loadProfile,
       login,
       completeTwoFactor,
       register,
       logout,
     }),
-    [user, roles, permissions, isInitializing, login, completeTwoFactor, register, logout],
+    [user, roles, permissions, isInitializing, loadProfile, login, completeTwoFactor, register, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

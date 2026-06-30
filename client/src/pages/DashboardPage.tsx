@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { AccountSettingsCard } from '@/components/AccountSettingsCard';
 import { ActivityCard } from '@/components/ActivityCard';
 import { ConnectedAccountsCard } from '@/components/ConnectedAccountsCard';
 import { SessionsCard } from '@/components/SessionsCard';
@@ -45,6 +46,7 @@ export function DashboardPage(): JSX.Element {
           </dl>
         </section>
 
+        <AccountSettingsCard />
         <TwoFactorCard />
         <ConnectedAccountsCard />
         <SessionsCard />
