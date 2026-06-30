@@ -49,6 +49,11 @@ export function LoginPage(): JSX.Element {
             {formError}
           </p>
         ) : null}
+        <div className="-mt-1 text-right">
+          <Link to="/forgot-password" className="text-xs font-medium text-indigo-600 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
         <Button type="submit" loading={isSubmitting}>
           Sign in
         </Button>

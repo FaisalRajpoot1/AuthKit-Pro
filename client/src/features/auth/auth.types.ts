@@ -38,5 +38,20 @@ export const registerFormSchema = z.object({
   displayName: z.string().max(80).optional(),
 });
 
+export const forgotPasswordFormSchema = z.object({
+  email: z.string().email('Enter a valid email'),
+});
+
+export const resetPasswordFormSchema = z.object({
+  password: z
+    .string()
+    .min(8, 'At least 8 characters')
+    .regex(/[a-z]/, 'Needs a lowercase letter')
+    .regex(/[A-Z]/, 'Needs an uppercase letter')
+    .regex(/[0-9]/, 'Needs a number'),
+});
+
 export type LoginFormValues = z.infer<typeof loginFormSchema>;
 export type RegisterFormValues = z.infer<typeof registerFormSchema>;
+export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordFormSchema>;
+export type ResetPasswordFormValues = z.infer<typeof resetPasswordFormSchema>;

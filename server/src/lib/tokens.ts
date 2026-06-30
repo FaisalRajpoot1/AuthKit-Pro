@@ -7,16 +7,21 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
  */
 const REFRESH_TOKEN_BYTES = 48;
 
-export interface GeneratedRefreshToken {
-  /** Raw token to send to the client. Never stored. */
+export interface GeneratedToken {
+  /** Raw token to send to the client/email. Never stored. */
   token: string;
   /** SHA-256 hash to persist. */
   hash: string;
 }
 
-export function generateRefreshToken(): GeneratedRefreshToken {
-  const token = randomBytes(REFRESH_TOKEN_BYTES).toString('base64url');
+/** Generates a high-entropy opaque token plus its storage hash. */
+export function generateOpaqueToken(bytes = 32): GeneratedToken {
+  const token = randomBytes(bytes).toString('base64url');
   return { token, hash: hashToken(token) };
+}
+
+export function generateRefreshToken(): GeneratedToken {
+  return generateOpaqueToken(REFRESH_TOKEN_BYTES);
 }
 
 export function hashToken(token: string): string {

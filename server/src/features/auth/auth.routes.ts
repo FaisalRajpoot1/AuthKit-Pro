@@ -3,6 +3,8 @@ import { requireAuth } from '../../middleware/auth.middleware';
 import { authRateLimiter } from '../../middleware/rateLimit.middleware';
 import { validateBody } from '../../middleware/validate.middleware';
 import { asyncHandler } from '../../utils/asyncHandler';
+import { emailVerificationRouter } from '../email-verification/emailVerification.routes';
+import { passwordResetRouter } from '../password-reset/passwordReset.routes';
 import * as authController from './auth.controller';
 import { loginSchema, registerSchema } from './auth.schema';
 
@@ -11,6 +13,10 @@ import { loginSchema, registerSchema } from './auth.schema';
  * request bodies are validated before reaching controllers.
  */
 export const authRouter = Router();
+
+// Sub-flows: /auth/email/* and /auth/password/*
+authRouter.use('/email', emailVerificationRouter);
+authRouter.use('/password', passwordResetRouter);
 
 authRouter.post(
   '/register',

@@ -6,6 +6,7 @@ import { hashPassword, verifyPassword } from '../../lib/password';
 import { prisma } from '../../lib/prisma';
 import { generateRefreshToken, hashToken, newTokenFamily } from '../../lib/tokens';
 import { ConflictError, UnauthorizedError } from '../../utils/errors';
+import { issueEmailVerification } from '../email-verification/emailVerification.service';
 import type { LoginInput, RegisterInput } from './auth.schema';
 import {
   type AuthResult,
@@ -83,6 +84,13 @@ export async function register(input: RegisterInput, context: RequestContext): P
 
   const tokens = await issueTokens(user, newTokenFamily(), context);
   logger.info({ userId: user.id }, 'User registered');
+
+  // Best-effort: a failed verification email must not fail registration.
+  try {
+    await issueEmailVerification(user.id, user.email);
+  } catch (error) {
+    logger.error({ err: error, userId: user.id }, 'Failed to send verification email');
+  }
 
   return { user: toUserDto(user), tokens };
 }

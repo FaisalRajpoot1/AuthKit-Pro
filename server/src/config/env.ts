@@ -33,6 +33,25 @@ const envSchema = z.object({
     .string()
     .default('false')
     .transform((value) => value === 'true'),
+
+  // Public URL of the frontend — used to build links in emails.
+  APP_URL: z.string().url().default('http://localhost:5173'),
+
+  // Single-use token lifetimes.
+  EMAIL_VERIFICATION_TTL_HOURS: z.coerce.number().int().positive().default(24),
+  PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(30),
+
+  // Email delivery. When SMTP_HOST is unset, emails are logged to the console
+  // (development) instead of sent — handy for local flows without a mailserver.
+  EMAIL_FROM: z.string().default('AuthKit Pro <no-reply@authkit.local>'),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_SECURE: z
+    .string()
+    .default('false')
+    .transform((value) => value === 'true'),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

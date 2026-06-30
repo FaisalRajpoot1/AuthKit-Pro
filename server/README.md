@@ -31,6 +31,18 @@ src/
 - Zod request validation, Helmet, CORS (credentialed), per-route rate limiting
 - Centralized error handling with stable error codes
 
+## Phase 2 — implemented
+
+- **Email verification**: token sent on registration; verify, resend, and
+  email-change confirmation. Single-use hashed tokens with expiry.
+- **Password reset**: forgot/reset with enumeration-safe responses; completing a
+  reset revokes all active sessions.
+- **Account management**: update profile, change password (keeps the current
+  session, revokes the rest), change email (confirmed via the new address),
+  soft-delete account, and pre-registration username/email availability check.
+- **Email service**: pluggable transport — SMTP (Nodemailer) when configured,
+  console logging in development.
+
 ## Getting started
 
 ```bash
@@ -66,6 +78,16 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | `POST` | `/api/v1/auth/refresh` | cookie | Rotate refresh token, new access token |
 | `POST` | `/api/v1/auth/logout` | cookie | Revoke refresh token |
 | `GET`  | `/api/v1/auth/me` | Bearer | Current user profile |
+| `POST` | `/api/v1/auth/email/verify` | — | Verify email with token |
+| `POST` | `/api/v1/auth/email/confirm-change` | — | Confirm email change with token |
+| `POST` | `/api/v1/auth/email/resend` | Bearer | Resend verification email |
+| `POST` | `/api/v1/auth/password/forgot` | — | Request a reset link |
+| `POST` | `/api/v1/auth/password/reset` | — | Reset password with token |
+| `PATCH`| `/api/v1/account/profile` | Bearer | Update profile |
+| `POST` | `/api/v1/account/change-password` | Bearer | Change password |
+| `POST` | `/api/v1/account/change-email` | Bearer | Request email change |
+| `DELETE`| `/api/v1/account` | Bearer | Soft-delete account |
+| `GET`  | `/api/v1/account/availability` | — | Username/email availability |
 | `GET`  | `/api/v1/health/live` | — | Liveness |
 | `GET`  | `/api/v1/health/ready` | — | Readiness (DB check) |
 

@@ -30,3 +30,20 @@ export async function fetchMe(): Promise<User> {
   const { data } = await apiClient.get<{ user: User }>('/auth/me');
   return data.user;
 }
+
+/** Request a password-reset link (always succeeds, even for unknown emails). */
+export async function requestPasswordReset(email: string): Promise<void> {
+  await apiClient.post('/auth/password/forgot', { email });
+}
+
+export async function resetPassword(token: string, password: string): Promise<void> {
+  await apiClient.post('/auth/password/reset', { token, password });
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+  await apiClient.post('/auth/email/verify', { token });
+}
+
+export async function confirmEmailChange(token: string): Promise<void> {
+  await apiClient.post('/auth/email/confirm-change', { token });
+}
