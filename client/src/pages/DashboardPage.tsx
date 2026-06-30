@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ActivityCard } from '@/components/ActivityCard';
 import { SessionsCard } from '@/components/SessionsCard';
+import { TwoFactorCard } from '@/components/TwoFactorCard';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthContext';
 
@@ -33,6 +34,7 @@ export function DashboardPage(): JSX.Element {
           </dl>
         </section>
 
+        <TwoFactorCard />
         <SessionsCard />
         <ActivityCard />
       </div>

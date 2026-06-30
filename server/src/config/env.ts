@@ -25,6 +25,14 @@ const envSchema = z.object({
   JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 chars'),
   JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 chars'),
 
+  // Base64-encoded 32-byte key for AES-256-GCM (encrypts TOTP secrets at rest).
+  // Generate: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+  ENCRYPTION_KEY: z
+    .string()
+    .refine((value) => Buffer.from(value, 'base64').length === 32, {
+      message: 'ENCRYPTION_KEY must be a base64-encoded 32-byte key',
+    }),
+
   ACCESS_TOKEN_TTL: z.string().default('15m'),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
 
@@ -40,6 +48,10 @@ const envSchema = z.object({
   // Single-use token lifetimes.
   EMAIL_VERIFICATION_TTL_HOURS: z.coerce.number().int().positive().default(24),
   PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(30),
+
+  // Two-factor authentication.
+  TOTP_ISSUER: z.string().default('AuthKit Pro'),
+  TRUSTED_DEVICE_TTL_DAYS: z.coerce.number().int().positive().default(30),
 
   // Email delivery. When SMTP_HOST is unset, emails are logged to the console
   // (development) instead of sent — handy for local flows without a mailserver.

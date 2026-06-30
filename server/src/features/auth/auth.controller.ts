@@ -1,6 +1,12 @@
 import type { Request, Response } from 'express';
 import { UnauthorizedError } from '../../utils/errors';
-import { clearRefreshCookie, REFRESH_COOKIE_NAME, setRefreshCookie } from './auth.cookies';
+import {
+  clearRefreshCookie,
+  REFRESH_COOKIE_NAME,
+  setRefreshCookie,
+  setTrustedDeviceCookie,
+  TRUSTED_DEVICE_COOKIE_NAME,
+} from './auth.cookies';
 import * as authService from './auth.service';
 import type { RequestContext } from './auth.types';
 
@@ -18,9 +24,26 @@ export async function register(req: Request, res: Response): Promise<void> {
 }
 
 export async function login(req: Request, res: Response): Promise<void> {
-  const { user, tokens } = await authService.login(req.body, getContext(req));
-  setRefreshCookie(res, tokens.refreshToken, tokens.refreshTokenExpiresAt);
-  res.status(200).json({ user, accessToken: tokens.accessToken });
+  const trustedDeviceToken = req.cookies?.[TRUSTED_DEVICE_COOKIE_NAME] as string | undefined;
+  const result = await authService.login(req.body, getContext(req), { trustedDeviceToken });
+
+  if (result.status === 'two_factor_required') {
+    res.status(200).json({ twoFactorRequired: true, challengeToken: result.challengeToken });
+    return;
+  }
+
+  setRefreshCookie(res, result.tokens.refreshToken, result.tokens.refreshTokenExpiresAt);
+  res.status(200).json({ user: result.user, accessToken: result.tokens.accessToken });
+}
+
+export async function twoFactorLogin(req: Request, res: Response): Promise<void> {
+  const result = await authService.completeTwoFactorLogin(req.body, getContext(req));
+
+  setRefreshCookie(res, result.tokens.refreshToken, result.tokens.refreshTokenExpiresAt);
+  if (result.trustedDevice) {
+    setTrustedDeviceCookie(res, result.trustedDevice.token, result.trustedDevice.expiresAt);
+  }
+  res.status(200).json({ user: result.user, accessToken: result.tokens.accessToken });
 }
 
 export async function refresh(req: Request, res: Response): Promise<void> {

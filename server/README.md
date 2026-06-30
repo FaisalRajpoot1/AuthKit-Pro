@@ -57,6 +57,18 @@ src/
   detection) with IP, user-agent, and metadata. Users can read their own history
   (cursor-paginated). `location` is a seam for a geo-IP provider.
 
+## Phase 4A — Two-Factor Authentication (TOTP)
+
+- **Authenticator-app 2FA** (TOTP): setup returns a QR code + secret; enabling
+  verifies a code and issues one-time **backup codes**. Disable requires the
+  password.
+- **TOTP secret is encrypted at rest** with AES-256-GCM (`ENCRYPTION_KEY`).
+- **Login challenge flow**: a correct password on a 2FA account returns a
+  short-lived challenge token instead of a session; `/auth/2fa/login` completes
+  it with a TOTP or backup code. **Trusted devices** can skip 2FA for a window.
+- Backup codes are hashed at rest and single-use; reuse of a backup code is
+  impossible. All 2FA actions are audit-logged.
+
 ## Getting started
 
 ```bash
@@ -106,6 +118,12 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | `DELETE`| `/api/v1/sessions` | Bearer | Log out other devices |
 | `DELETE`| `/api/v1/sessions/:id` | Bearer | Revoke a specific session |
 | `GET`  | `/api/v1/audit-logs` | Bearer | Read own audit history |
+| `POST` | `/api/v1/auth/2fa/login` | challenge | Complete 2FA login |
+| `GET`  | `/api/v1/account/2fa` | Bearer | 2FA status |
+| `POST` | `/api/v1/account/2fa/setup` | Bearer | Start 2FA enrollment (QR + secret) |
+| `POST` | `/api/v1/account/2fa/enable` | Bearer | Confirm code, enable, get backup codes |
+| `POST` | `/api/v1/account/2fa/disable` | Bearer | Disable 2FA (password) |
+| `POST` | `/api/v1/account/2fa/backup-codes` | Bearer | Regenerate backup codes |
 | `GET`  | `/api/v1/health/live` | — | Liveness |
 | `GET`  | `/api/v1/health/ready` | — | Readiness (DB check) |
 

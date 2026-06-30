@@ -18,5 +18,12 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+export const twoFactorLoginSchema = z.object({
+  challengeToken: z.string().min(1, 'Challenge token is required'),
+  code: z.string().min(6, 'Enter your authentication code').max(20).trim(),
+  trustDevice: z.boolean().optional(),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type TwoFactorLoginInput = z.infer<typeof twoFactorLoginSchema>;

@@ -6,7 +6,7 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { emailVerificationRouter } from '../email-verification/emailVerification.routes';
 import { passwordResetRouter } from '../password-reset/passwordReset.routes';
 import * as authController from './auth.controller';
-import { loginSchema, registerSchema } from './auth.schema';
+import { loginSchema, registerSchema, twoFactorLoginSchema } from './auth.schema';
 
 /**
  * Auth routes mounted at /api/v1/auth. Sensitive endpoints are rate-limited;
@@ -30,6 +30,13 @@ authRouter.post(
   authRateLimiter,
   validateBody(loginSchema),
   asyncHandler(authController.login),
+);
+
+authRouter.post(
+  '/2fa/login',
+  authRateLimiter,
+  validateBody(twoFactorLoginSchema),
+  asyncHandler(authController.twoFactorLogin),
 );
 
 authRouter.post('/refresh', authRateLimiter, asyncHandler(authController.refresh));

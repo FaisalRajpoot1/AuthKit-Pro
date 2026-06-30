@@ -1,5 +1,5 @@
 import type { Prisma, RefreshToken, Session, User } from '@prisma/client';
-import { signAccessToken } from '../../lib/jwt';
+import { signAccessToken, signTwoFactorChallenge, verifyTwoFactorChallenge } from '../../lib/jwt';
 import { logger } from '../../lib/logger';
 import { hashPassword, verifyPassword } from '../../lib/password';
 import { prisma } from '../../lib/prisma';
@@ -13,11 +13,18 @@ import {
   revokeSession,
   touchSession,
 } from '../sessions/sessions.service';
-import type { LoginInput, RegisterInput } from './auth.schema';
+import {
+  isTrustedDevice,
+  registerTrustedDevice,
+  verifySecondFactor,
+} from '../two-factor/twoFactor.service';
+import type { LoginInput, RegisterInput, TwoFactorLoginInput } from './auth.schema';
 import {
   type AuthResult,
   type AuthTokens,
+  type LoginResult,
   type RequestContext,
+  type TwoFactorLoginResult,
   type UserDto,
   toUserDto,
 } from './auth.types';
@@ -93,7 +100,24 @@ export async function register(input: RegisterInput, context: RequestContext): P
   return { user: toUserDto(user), tokens };
 }
 
-export async function login(input: LoginInput, context: RequestContext): Promise<AuthResult> {
+/** Creates a session and issues a fresh token pair for an authenticated user. */
+async function issueAuthenticatedSession(
+  user: User,
+  context: RequestContext,
+): Promise<AuthResult> {
+  const tokens = await prisma.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+    const session = await createSession(user.id, context, refreshExpiry(), tx);
+    return issueTokens(user, session.id, session.expiresAt, tx);
+  });
+  return { user: toUserDto(user), tokens };
+}
+
+export async function login(
+  input: LoginInput,
+  context: RequestContext,
+  options: { trustedDeviceToken?: string | undefined } = {},
+): Promise<LoginResult> {
   const identifier = input.identifier.toLowerCase();
   const user = await prisma.user.findFirst({
     where: {
@@ -122,15 +146,52 @@ export async function login(input: LoginInput, context: RequestContext): Promise
     throw new UnauthorizedError('This account has been disabled');
   }
 
-  const tokens = await prisma.$transaction(async (tx) => {
-    await tx.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-    const session = await createSession(user.id, context, refreshExpiry(), tx);
-    return issueTokens(user, session.id, session.expiresAt, tx);
-  });
+  // Second factor required unless this device is already trusted.
+  if (user.twoFactorEnabled) {
+    const trusted = await isTrustedDevice(user.id, options.trustedDeviceToken);
+    if (!trusted) {
+      return { status: 'two_factor_required', challengeToken: signTwoFactorChallenge(user.id) };
+    }
+  }
 
+  const result = await issueAuthenticatedSession(user, context);
   logger.info({ userId: user.id }, 'User logged in');
   await recordAudit({ action: 'USER_LOGIN', userId: user.id, context });
-  return { user: toUserDto(user), tokens };
+  return { status: 'authenticated', ...result };
+}
+
+/**
+ * Completes a 2FA login: validates the first-factor challenge, verifies the
+ * second factor (TOTP or backup code), issues tokens, and optionally remembers
+ * the device so future logins from it skip 2FA.
+ */
+export async function completeTwoFactorLogin(
+  input: TwoFactorLoginInput,
+  context: RequestContext,
+): Promise<TwoFactorLoginResult> {
+  const { userId } = verifyTwoFactorChallenge(input.challengeToken);
+
+  const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
+  if (!user || !user.twoFactorEnabled || !user.isActive) {
+    throw new UnauthorizedError('Two-factor authentication challenge is no longer valid');
+  }
+
+  const verified = await verifySecondFactor(user, input.code);
+  if (!verified) {
+    await recordAudit({ action: 'TWO_FACTOR_CHALLENGE_FAILED', userId: user.id, context });
+    throw new UnauthorizedError('Invalid authentication code');
+  }
+
+  const result = await issueAuthenticatedSession(user, context);
+  logger.info({ userId: user.id }, 'User logged in (2FA)');
+  await recordAudit({ action: 'TWO_FACTOR_CHALLENGE_SUCCEEDED', userId: user.id, context });
+  await recordAudit({ action: 'USER_LOGIN', userId: user.id, context });
+
+  if (input.trustDevice) {
+    const trusted = await registerTrustedDevice(user.id, context);
+    return { ...result, trustedDevice: trusted };
+  }
+  return result;
 }
 
 /**

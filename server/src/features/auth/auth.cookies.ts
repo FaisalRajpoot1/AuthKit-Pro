@@ -29,3 +29,20 @@ export function clearRefreshCookie(res: Response): void {
     path: REFRESH_COOKIE_PATH,
   });
 }
+
+/**
+ * "Remember this device" cookie. Scoped broadly (path "/") so it is presented
+ * on the login request, letting the server skip 2FA for a trusted device.
+ */
+export const TRUSTED_DEVICE_COOKIE_NAME = 'authkit_trusted_device';
+
+export function setTrustedDeviceCookie(res: Response, token: string, expiresAt: Date): void {
+  res.cookie(TRUSTED_DEVICE_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: isProduction || env.COOKIE_SECURE,
+    sameSite: 'lax',
+    domain: env.COOKIE_DOMAIN,
+    path: '/',
+    expires: expiresAt,
+  });
+}

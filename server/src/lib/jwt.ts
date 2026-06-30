@@ -40,3 +40,34 @@ export function verifyAccessToken(token: string): AccessTokenPayload {
     throw new UnauthorizedError('Invalid or expired access token');
   }
 }
+
+const TWO_FACTOR_AUDIENCE = 'authkit-2fa';
+
+/**
+ * Short-lived token issued after a correct password when 2FA is required. It
+ * proves the first factor succeeded so the second-factor step can complete
+ * login. Audience-scoped so it can never be used as an access token.
+ */
+export function signTwoFactorChallenge(userId: string): string {
+  return jwt.sign({ sub: userId }, env.JWT_ACCESS_SECRET, {
+    expiresIn: '5m',
+    issuer: 'authkit',
+    audience: TWO_FACTOR_AUDIENCE,
+  });
+}
+
+export function verifyTwoFactorChallenge(token: string): { userId: string } {
+  try {
+    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET, {
+      issuer: 'authkit',
+      audience: TWO_FACTOR_AUDIENCE,
+    });
+    if (typeof decoded === 'string' || typeof decoded.sub !== 'string') {
+      throw new UnauthorizedError('Invalid challenge token');
+    }
+    return { userId: decoded.sub };
+  } catch (error) {
+    if (error instanceof UnauthorizedError) throw error;
+    throw new UnauthorizedError('Invalid or expired challenge token');
+  }
+}

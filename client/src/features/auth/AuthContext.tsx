@@ -8,13 +8,15 @@ import {
   type ReactNode,
 } from 'react';
 import * as authApi from './auth.api';
+import type { LoginResult, TwoFactorLoginInput } from './auth.api';
 import type { LoginFormValues, RegisterFormValues, User } from './auth.types';
 
 interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   isInitializing: boolean;
-  login: (values: LoginFormValues) => Promise<void>;
+  login: (values: LoginFormValues) => Promise<LoginResult>;
+  completeTwoFactor: (input: TwoFactorLoginInput) => Promise<void>;
   register: (values: RegisterFormValues) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -49,8 +51,16 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     };
   }, []);
 
-  const login = useCallback(async (values: LoginFormValues) => {
-    const { user: loggedIn } = await authApi.login(values);
+  const login = useCallback(async (values: LoginFormValues): Promise<LoginResult> => {
+    const result = await authApi.login(values);
+    if (result.kind === 'authenticated') {
+      setUser(result.response.user);
+    }
+    return result;
+  }, []);
+
+  const completeTwoFactor = useCallback(async (input: TwoFactorLoginInput) => {
+    const { user: loggedIn } = await authApi.completeTwoFactorLogin(input);
     setUser(loggedIn);
   }, []);
 
@@ -70,10 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       isAuthenticated: user !== null,
       isInitializing,
       login,
+      completeTwoFactor,
       register,
       logout,
     }),
-    [user, isInitializing, login, register, logout],
+    [user, isInitializing, login, completeTwoFactor, register, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
