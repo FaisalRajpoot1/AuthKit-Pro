@@ -1,8 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { confirmEmailChange, verifyEmail } from '@/features/auth/auth.api';
+import { AcceptInvitePage } from '@/pages/AcceptInvitePage';
 import { AdminPage } from '@/pages/AdminPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { OrganizationsPage } from '@/pages/OrganizationsPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage';
@@ -18,6 +20,7 @@ export function App(): JSX.Element {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+      <Route path="/invites/accept" element={<AcceptInvitePage />} />
       <Route
         path="/verify-email"
         element={
@@ -43,6 +46,7 @@ export function App(): JSX.Element {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/organizations" element={<OrganizationsPage />} />
         <Route path="/admin" element={<AdminPage />} />
       </Route>
 

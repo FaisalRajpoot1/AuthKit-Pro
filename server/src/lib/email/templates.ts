@@ -52,6 +52,24 @@ export function passwordResetTemplate(to: string, url: string): EmailMessage {
   };
 }
 
+export function organizationInviteTemplate(
+  to: string,
+  organizationName: string,
+  url: string,
+): EmailMessage {
+  return {
+    to,
+    subject: `You've been invited to join ${organizationName}`,
+    html: layout(
+      `Join ${organizationName}`,
+      `<p>You've been invited to join <strong>${organizationName}</strong> on AuthKit Pro.</p>
+       <p style="margin:24px 0;">${button(url, 'Accept invitation')}</p>
+       <p style="font-size:13px; color:#64748b;">Or paste this link into your browser:<br>${url}</p>`,
+    ),
+    text: `You've been invited to join ${organizationName} on AuthKit Pro:\n\n${url}`,
+  };
+}
+
 export function emailChangeTemplate(to: string, url: string): EmailMessage {
   return {
     to,

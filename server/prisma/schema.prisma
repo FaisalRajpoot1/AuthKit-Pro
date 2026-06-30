@@ -42,6 +42,9 @@ model User {
   trustedDevices     TrustedDevice[]
   oauthAccounts      OAuthAccount[]
   roles              UserRole[]
+  ownedOrganizations      Organization[]       @relation("OwnedOrganizations")
+  organizationMemberships OrganizationMember[]
+  teamMemberships         TeamMember[]
 
   @@index([deletedAt])
   @@map("users")
@@ -261,6 +264,110 @@ model UserRole {
   @@map("user_roles")
 }
 
+/// Role of a user within an organization.
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+
+  @@map("org_role")
+}
+
+/// Role of a user within a team.
+enum TeamRole {
+  LEAD
+  MEMBER
+
+  @@map("team_role")
+}
+
+/// A tenant grouping users into teams (Slack-style). The owner is also stored
+/// as a member with the OWNER role.
+model Organization {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String    @unique
+  ownerId   String    @map("owner_id") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  owner   User                 @relation("OwnedOrganizations", fields: [ownerId], references: [id])
+  members OrganizationMember[]
+  invites OrganizationInvite[]
+  teams   Team[]
+
+  @@index([ownerId])
+  @@map("organizations")
+}
+
+/// Membership of a user in an organization, with their org-scoped role.
+model OrganizationMember {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  role           OrgRole  @default(MEMBER)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+/// A pending invitation to join an organization, addressed to an email.
+model OrganizationInvite {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  email          String
+  role           OrgRole   @default(MEMBER)
+  tokenHash      String    @unique @map("token_hash")
+  invitedById    String    @map("invited_by_id") @db.Uuid
+  expiresAt      DateTime  @map("expires_at")
+  acceptedAt     DateTime? @map("accepted_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("organization_invites")
+}
+
+/// A team within an organization.
+model Team {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members      TeamMember[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("teams")
+}
+
+/// Membership of a user in a team, with their team-scoped role.
+model TeamMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  teamId    String   @map("team_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  role      TeamRole @default(MEMBER)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([userId])
+  @@map("team_members")
+}
+
 /// Auditable actions tracked for security and compliance.
 enum AuditAction {
   USER_REGISTERED
@@ -291,6 +398,19 @@ enum AuditAction {
   ROLE_DELETED
   ROLE_PERMISSIONS_UPDATED
   USER_ROLES_UPDATED
+  ORG_CREATED
+  ORG_UPDATED
+  ORG_DELETED
+  ORG_MEMBER_INVITED
+  ORG_MEMBER_JOINED
+  ORG_MEMBER_REMOVED
+  ORG_MEMBER_ROLE_CHANGED
+  ORG_MEMBER_LEFT
+  ORG_OWNERSHIP_TRANSFERRED
+  TEAM_CREATED
+  TEAM_DELETED
+  TEAM_MEMBER_ADDED
+  TEAM_MEMBER_REMOVED
 
   @@map("audit_action")
 }

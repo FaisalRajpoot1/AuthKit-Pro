@@ -3,6 +3,7 @@ import { logger } from '../logger';
 import type { EmailTransport } from './email.types';
 import {
   emailChangeTemplate,
+  organizationInviteTemplate,
   passwordResetTemplate,
   verifyEmailTemplate,
 } from './templates';
@@ -38,5 +39,15 @@ export const emailService = {
 
   async sendEmailChangeEmail(to: string, token: string): Promise<void> {
     await transport.send(emailChangeTemplate(to, link('/confirm-email-change', token)));
+  },
+
+  async sendOrganizationInviteEmail(
+    to: string,
+    organizationName: string,
+    token: string,
+  ): Promise<void> {
+    await transport.send(
+      organizationInviteTemplate(to, organizationName, link('/invites/accept', token)),
+    );
   },
 };

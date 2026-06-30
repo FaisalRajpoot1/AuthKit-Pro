@@ -20,6 +20,9 @@ export function DashboardPage(): JSX.Element {
       <header className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
         <div className="flex items-center gap-4">
+          <Link to="/organizations" className="text-sm font-semibold text-indigo-600 hover:underline">
+            Organizations
+          </Link>
           {hasPermission('roles:read') ? (
             <Link to="/admin" className="text-sm font-semibold text-indigo-600 hover:underline">
               Admin

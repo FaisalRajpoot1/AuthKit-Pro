@@ -102,6 +102,16 @@ src/
 
 - All role/permission changes are audit-logged.
 
+## Phase 5B — Organizations & Teams
+
+- **Organizations** (Slack-style tenants): create, list, rename, delete. The
+  creator becomes `OWNER`; org-scoped roles are `OWNER > ADMIN > MEMBER`.
+- **Members**: invite by email (expiring, hashed token + email), accept invite,
+  change role, remove, leave, and **transfer ownership** (owner → admin swap).
+- **Teams** within an org: create, delete, add/remove members (`LEAD`/`MEMBER`).
+- Authorization is enforced per request via `requireMembership(orgId, minRole)`.
+- All organization/team actions are audit-logged.
+
 ## Getting started
 
 ```bash
@@ -169,6 +179,13 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | `PUT`  | `/api/v1/admin/roles/:id/permissions` | `roles:manage` | Set role permissions |
 | `GET`  | `/api/v1/admin/permissions` | `permissions:read` | List permissions |
 | `PUT`  | `/api/v1/admin/users/:id/roles` | `users:manage` | Assign roles to a user |
+| `POST` | `/api/v1/organizations` | Bearer | Create an organization |
+| `GET`  | `/api/v1/organizations` | Bearer | List my organizations |
+| `POST` | `/api/v1/organizations/:id/invites` | org ADMIN | Invite a member by email |
+| `POST` | `/api/v1/organizations/invites/accept` | Bearer | Accept an invite |
+| `POST` | `/api/v1/organizations/:id/transfer-ownership` | org OWNER | Transfer ownership |
+| `GET`  | `/api/v1/organizations/:id/teams` | org member | List teams |
+| `POST` | `/api/v1/organizations/:id/teams` | org ADMIN | Create a team |
 | `GET`  | `/api/v1/health/live` | — | Liveness |
 | `GET`  | `/api/v1/health/ready` | — | Readiness (DB check) |
 
