@@ -1,0 +1,62 @@
+// AuthKit Pro — Prisma schema
+// Phase 1: core authentication (users + refresh token rotation).
+// Future phases extend this with roles, permissions, sessions, oauth, etc.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Application user. Credentials + lifecycle/audit fields.
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  email         String    @unique
+  username      String    @unique
+  // Argon2id hash. Never exposed via the API.
+  passwordHash  String    @map("password_hash")
+  displayName   String?   @map("display_name")
+  emailVerified Boolean   @default(false) @map("email_verified")
+  isActive      Boolean   @default(true) @map("is_active")
+
+  // Audit / soft-delete
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  refreshTokens RefreshToken[]
+
+  @@index([deletedAt])
+  @@map("users")
+}
+
+/// Hashed refresh token supporting rotation + reuse detection.
+/// Tokens in the same `family` form a rotation chain; presenting an
+/// already-rotated (revoked) token revokes the whole family.
+model RefreshToken {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  // SHA-256 hash of the opaque token. The raw token is only ever sent to the client.
+  tokenHash    String    @unique @map("token_hash")
+  family       String    @db.Uuid
+  // Set when this token is rotated; points at its successor.
+  replacedById String?   @map("replaced_by_id") @db.Uuid
+
+  userAgent    String?   @map("user_agent")
+  ipAddress    String?   @map("ip_address")
+
+  expiresAt    DateTime  @map("expires_at")
+  revokedAt    DateTime? @map("revoked_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([family])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
