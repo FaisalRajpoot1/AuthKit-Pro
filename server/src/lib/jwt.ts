@@ -6,6 +6,7 @@ import { UnauthorizedError } from '../utils/errors';
 export interface AccessTokenPayload {
   sub: string; // user id
   email: string;
+  sid: string; // session id — identifies the originating device session
 }
 
 const ACCESS_TOKEN_OPTIONS: SignOptions = {
@@ -25,11 +26,15 @@ export function verifyAccessToken(token: string): AccessTokenPayload {
       audience: 'authkit-client',
     });
 
-    if (typeof decoded === 'string' || typeof decoded.sub !== 'string') {
+    if (
+      typeof decoded === 'string' ||
+      typeof decoded.sub !== 'string' ||
+      typeof decoded.sid !== 'string'
+    ) {
       throw new UnauthorizedError('Invalid access token');
     }
 
-    return { sub: decoded.sub, email: String(decoded.email) };
+    return { sub: decoded.sub, email: String(decoded.email), sid: decoded.sid };
   } catch (error) {
     if (error instanceof UnauthorizedError) throw error;
     throw new UnauthorizedError('Invalid or expired access token');

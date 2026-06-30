@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import { ActivityCard } from '@/components/ActivityCard';
+import { SessionsCard } from '@/components/SessionsCard';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthContext';
 
@@ -20,15 +22,20 @@ export function DashboardPage(): JSX.Element {
         </Button>
       </header>
 
-      <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-        <h2 className="mb-4 text-lg font-semibold text-slate-800">Your profile</h2>
-        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Display name" value={user?.displayName ?? '—'} />
-          <Field label="Username" value={user?.username ?? '—'} />
-          <Field label="Email" value={user?.email ?? '—'} />
-          <Field label="Email verified" value={user?.emailVerified ? 'Yes' : 'No'} />
-        </dl>
-      </section>
+      <div className="flex flex-col gap-6">
+        <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+          <h2 className="mb-4 text-lg font-semibold text-slate-800">Your profile</h2>
+          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Display name" value={user?.displayName ?? '—'} />
+            <Field label="Username" value={user?.username ?? '—'} />
+            <Field label="Email" value={user?.email ?? '—'} />
+            <Field label="Email verified" value={user?.emailVerified ? 'Yes' : 'No'} />
+          </dl>
+        </section>
+
+        <SessionsCard />
+        <ActivityCard />
+      </div>
     </div>
   );
 }

@@ -16,6 +16,6 @@ export const requireAuth: RequestHandler = (req, _res, next) => {
   const token = header.slice('Bearer '.length).trim();
   const payload = verifyAccessToken(token);
 
-  req.user = { id: payload.sub, email: payload.email };
+  req.user = { id: payload.sub, email: payload.email, sessionId: payload.sid };
   next();
 };

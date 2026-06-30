@@ -1,12 +1,18 @@
-import type { Prisma, RefreshToken, User } from '@prisma/client';
-import { env } from '../../config/env';
+import type { Prisma, RefreshToken, Session, User } from '@prisma/client';
 import { signAccessToken } from '../../lib/jwt';
 import { logger } from '../../lib/logger';
 import { hashPassword, verifyPassword } from '../../lib/password';
 import { prisma } from '../../lib/prisma';
-import { generateRefreshToken, hashToken, newTokenFamily } from '../../lib/tokens';
+import { generateRefreshToken, hashToken } from '../../lib/tokens';
 import { ConflictError, UnauthorizedError } from '../../utils/errors';
+import { recordAudit } from '../audit/audit.service';
 import { issueEmailVerification } from '../email-verification/emailVerification.service';
+import {
+  createSession,
+  refreshExpiry,
+  revokeSession,
+  touchSession,
+} from '../sessions/sessions.service';
 import type { LoginInput, RegisterInput } from './auth.schema';
 import {
   type AuthResult,
@@ -15,8 +21,6 @@ import {
   type UserDto,
   toUserDto,
 } from './auth.types';
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** Generic credentials error — never reveal whether the account exists. */
 const INVALID_CREDENTIALS = 'Invalid credentials';
@@ -28,33 +32,22 @@ const INVALID_CREDENTIALS = 'Invalid credentials';
  */
 const dummyHashPromise = hashPassword('authkit-timing-equalizer-password');
 
-function refreshExpiry(): Date {
-  return new Date(Date.now() + env.REFRESH_TOKEN_TTL_DAYS * MS_PER_DAY);
-}
-
 /**
- * Issues an access token plus a persisted, hashed refresh token belonging to
- * the given rotation family. The raw refresh token is returned only here.
+ * Issues an access token (carrying the session id) plus a persisted, hashed
+ * refresh token bound to the session. The raw refresh token is returned only
+ * here and never stored.
  */
 async function issueTokens(
   user: User,
-  family: string,
-  context: RequestContext,
+  sessionId: string,
+  expiresAt: Date,
   tx: Prisma.TransactionClient = prisma,
 ): Promise<AuthTokens> {
-  const accessToken = signAccessToken({ sub: user.id, email: user.email });
+  const accessToken = signAccessToken({ sub: user.id, email: user.email, sid: sessionId });
   const { token, hash } = generateRefreshToken();
-  const expiresAt = refreshExpiry();
 
   await tx.refreshToken.create({
-    data: {
-      userId: user.id,
-      tokenHash: hash,
-      family,
-      expiresAt,
-      userAgent: context.userAgent ?? null,
-      ipAddress: context.ipAddress ?? null,
-    },
+    data: { userId: user.id, sessionId, tokenHash: hash, expiresAt },
   });
 
   return { accessToken, refreshToken: token, refreshTokenExpiresAt: expiresAt };
@@ -82,8 +75,13 @@ export async function register(input: RegisterInput, context: RequestContext): P
     },
   });
 
-  const tokens = await issueTokens(user, newTokenFamily(), context);
+  const tokens = await prisma.$transaction(async (tx) => {
+    const session = await createSession(user.id, context, refreshExpiry(), tx);
+    return issueTokens(user, session.id, session.expiresAt, tx);
+  });
+
   logger.info({ userId: user.id }, 'User registered');
+  await recordAudit({ action: 'USER_REGISTERED', userId: user.id, context });
 
   // Best-effort: a failed verification email must not fail registration.
   try {
@@ -111,6 +109,12 @@ export async function login(input: LoginInput, context: RequestContext): Promise
     : await verifyPassword(await dummyHashPromise, input.password);
 
   if (!user || !passwordValid) {
+    await recordAudit({
+      action: 'LOGIN_FAILED',
+      userId: user?.id ?? null,
+      context,
+      metadata: { identifier: input.identifier },
+    });
     throw new UnauthorizedError(INVALID_CREDENTIALS);
   }
 
@@ -120,25 +124,19 @@ export async function login(input: LoginInput, context: RequestContext): Promise
 
   const tokens = await prisma.$transaction(async (tx) => {
     await tx.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-    return issueTokens(user, newTokenFamily(), context, tx);
+    const session = await createSession(user.id, context, refreshExpiry(), tx);
+    return issueTokens(user, session.id, session.expiresAt, tx);
   });
 
   logger.info({ userId: user.id }, 'User logged in');
+  await recordAudit({ action: 'USER_LOGIN', userId: user.id, context });
   return { user: toUserDto(user), tokens };
-}
-
-/** Revoke an entire rotation family — used when token reuse is detected. */
-async function revokeFamily(family: string, tx: Prisma.TransactionClient): Promise<void> {
-  await tx.refreshToken.updateMany({
-    where: { family, revokedAt: null },
-    data: { revokedAt: new Date() },
-  });
 }
 
 /**
  * Rotates a refresh token: validates the presented token, issues a new pair,
  * and revokes the old token. Detects reuse of an already-rotated token and
- * defensively revokes the whole family.
+ * defensively revokes the whole session.
  */
 export async function refresh(
   rawToken: string,
@@ -146,27 +144,24 @@ export async function refresh(
 ): Promise<{ tokens: AuthTokens; user: UserDto }> {
   const tokenHash = hashToken(rawToken);
 
-  return prisma.$transaction(async (tx) => {
-    const stored: (RefreshToken & { user: User }) | null = await tx.refreshToken.findUnique({
-      where: { tokenHash },
-      include: { user: true },
-    });
+  const result = await prisma.$transaction(async (tx) => {
+    const stored: (RefreshToken & { user: User; session: Session }) | null =
+      await tx.refreshToken.findUnique({
+        where: { tokenHash },
+        include: { user: true, session: true },
+      });
 
     if (!stored) {
       throw new UnauthorizedError('Invalid refresh token');
     }
 
-    // Reuse of a rotated/revoked token => likely theft. Burn the family.
+    // Reuse of a rotated/revoked token => likely theft. Burn the session.
     if (stored.revokedAt) {
-      await revokeFamily(stored.family, tx);
-      logger.warn(
-        { userId: stored.userId, family: stored.family },
-        'Refresh token reuse detected — family revoked',
-      );
-      throw new UnauthorizedError('Refresh token has been revoked');
+      await revokeSession(stored.sessionId, tx);
+      return { reuse: true as const, userId: stored.userId };
     }
 
-    if (stored.expiresAt.getTime() < Date.now()) {
+    if (stored.expiresAt.getTime() < Date.now() || stored.session.revokedAt) {
       throw new UnauthorizedError('Refresh token has expired');
     }
 
@@ -174,7 +169,8 @@ export async function refresh(
       throw new UnauthorizedError('Account is no longer active');
     }
 
-    const tokens = await issueTokens(stored.user, stored.family, context, tx);
+    const expiresAt = refreshExpiry();
+    const tokens = await issueTokens(stored.user, stored.sessionId, expiresAt, tx);
     const successor = await tx.refreshToken.findUnique({
       where: { tokenHash: hashToken(tokens.refreshToken) },
       select: { id: true },
@@ -184,18 +180,39 @@ export async function refresh(
       where: { id: stored.id },
       data: { revokedAt: new Date(), replacedById: successor?.id ?? null },
     });
+    await touchSession(stored.sessionId, context, expiresAt, tx);
 
-    return { tokens, user: toUserDto(stored.user) };
+    return { reuse: false as const, tokens, user: toUserDto(stored.user) };
   });
+
+  if (result.reuse) {
+    logger.warn({ userId: result.userId }, 'Refresh token reuse detected — session revoked');
+    await recordAudit({
+      action: 'REFRESH_TOKEN_REUSE_DETECTED',
+      userId: result.userId,
+      context,
+    });
+    throw new UnauthorizedError('Refresh token has been revoked');
+  }
+
+  return { tokens: result.tokens, user: result.user };
 }
 
-/** Revoke the refresh token presented at logout (idempotent). */
-export async function logout(rawToken: string | undefined): Promise<void> {
+/** Revoke the session behind the presented refresh token at logout. */
+export async function logout(
+  rawToken: string | undefined,
+  context: RequestContext,
+): Promise<void> {
   if (!rawToken) return;
-  await prisma.refreshToken.updateMany({
-    where: { tokenHash: hashToken(rawToken), revokedAt: null },
-    data: { revokedAt: new Date() },
+
+  const stored = await prisma.refreshToken.findUnique({
+    where: { tokenHash: hashToken(rawToken) },
+    select: { sessionId: true, userId: true },
   });
+  if (!stored) return;
+
+  await revokeSession(stored.sessionId);
+  await recordAudit({ action: 'USER_LOGOUT', userId: stored.userId, context });
 }
 
 export async function getProfile(userId: string): Promise<UserDto> {

@@ -2,10 +2,12 @@ import type { User } from '@prisma/client';
 import { logger } from '../../lib/logger';
 import { hashPassword, verifyPassword } from '../../lib/password';
 import { prisma } from '../../lib/prisma';
-import { hashToken } from '../../lib/tokens';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../../utils/errors';
+import { recordAudit } from '../audit/audit.service';
+import type { RequestContext } from '../auth/auth.types';
 import { toUserDto, type UserDto } from '../auth/auth.types';
 import { issueEmailChange } from '../email-verification/emailVerification.service';
+import { revokeAllUserSessions } from '../sessions/sessions.service';
 import type {
   AvailabilityQuery,
   ChangeEmailInput,
@@ -24,6 +26,7 @@ async function requireActiveUser(userId: string): Promise<User> {
 export async function updateProfile(
   userId: string,
   input: UpdateProfileInput,
+  context: RequestContext,
 ): Promise<UserDto> {
   await requireActiveUser(userId);
 
@@ -34,18 +37,19 @@ export async function updateProfile(
   });
 
   logger.info({ userId }, 'Profile updated');
+  await recordAudit({ action: 'PROFILE_UPDATED', userId, context });
   return toUserDto(user);
 }
 
 /**
  * Changes the password after verifying the current one, then revokes every
- * *other* refresh-token session. The caller's current session (identified by
- * its refresh token) is preserved.
+ * *other* session. The caller's current session is preserved.
  */
 export async function changePassword(
   userId: string,
   input: ChangePasswordInput,
-  currentRefreshToken?: string,
+  currentSessionId: string,
+  context: RequestContext,
 ): Promise<void> {
   const user = await requireActiveUser(userId);
 
@@ -55,21 +59,14 @@ export async function changePassword(
   }
 
   const passwordHash = await hashPassword(input.newPassword);
-  const keepHash = currentRefreshToken ? hashToken(currentRefreshToken) : null;
 
-  await prisma.$transaction([
-    prisma.user.update({ where: { id: userId }, data: { passwordHash } }),
-    prisma.refreshToken.updateMany({
-      where: {
-        userId,
-        revokedAt: null,
-        ...(keepHash ? { tokenHash: { not: keepHash } } : {}),
-      },
-      data: { revokedAt: new Date() },
-    }),
-  ]);
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: userId }, data: { passwordHash } });
+    await revokeAllUserSessions(userId, currentSessionId, tx);
+  });
 
   logger.info({ userId }, 'Password changed');
+  await recordAudit({ action: 'PASSWORD_CHANGED', userId, context });
 }
 
 /**
@@ -80,6 +77,7 @@ export async function changePassword(
 export async function requestEmailChange(
   userId: string,
   input: ChangeEmailInput,
+  context: RequestContext,
 ): Promise<void> {
   const user = await requireActiveUser(userId);
 
@@ -102,10 +100,15 @@ export async function requestEmailChange(
 
   await issueEmailChange(userId, input.newEmail);
   logger.info({ userId }, 'Email change requested');
+  await recordAudit({ action: 'EMAIL_CHANGE_REQUESTED', userId, context });
 }
 
 /** Soft-deletes the account and revokes all sessions. */
-export async function deleteAccount(userId: string, input: DeleteAccountInput): Promise<void> {
+export async function deleteAccount(
+  userId: string,
+  input: DeleteAccountInput,
+  context: RequestContext,
+): Promise<void> {
   const user = await requireActiveUser(userId);
 
   const valid = await verifyPassword(user.passwordHash, input.currentPassword);
@@ -113,18 +116,16 @@ export async function deleteAccount(userId: string, input: DeleteAccountInput): 
     throw new UnauthorizedError('Current password is incorrect');
   }
 
-  await prisma.$transaction([
-    prisma.user.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
       where: { id: userId },
       data: { deletedAt: new Date(), isActive: false },
-    }),
-    prisma.refreshToken.updateMany({
-      where: { userId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    }),
-  ]);
+    });
+    await revokeAllUserSessions(userId, null, tx);
+  });
 
   logger.info({ userId }, 'Account soft-deleted');
+  await recordAudit({ action: 'ACCOUNT_DELETED', userId, context });
 }
 
 /** Checks whether a username and/or email is available for registration. */

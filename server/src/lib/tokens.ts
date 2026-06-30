@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 /**
  * Refresh tokens are opaque high-entropy random strings (not JWTs). The raw
@@ -26,9 +26,4 @@ export function generateRefreshToken(): GeneratedToken {
 
 export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
-}
-
-/** A new rotation-chain identifier for a login session's refresh tokens. */
-export function newTokenFamily(): string {
-  return randomUUID();
 }

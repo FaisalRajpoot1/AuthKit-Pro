@@ -43,6 +43,20 @@ src/
 - **Email service**: pluggable transport — SMTP (Nodemailer) when configured,
   console logging in development.
 
+## Phase 3 — implemented
+
+- **Sessions**: every login creates a device `Session` (browser/OS/type parsed
+  from the user-agent, IP, last-used) that owns its refresh-token rotation chain.
+  List active sessions, revoke one, or "log out other devices". Refresh is
+  **sliding** (extends the window). The access token carries a `sid` claim so
+  the current device is identifiable.
+- **Reuse detection now revokes the whole session**; change-password keeps the
+  current session and kills the rest; reset/delete revoke everything.
+- **Audit log**: append-only trail of every significant action (register, login,
+  failed login, logout, password/email changes, session revocations, token-reuse
+  detection) with IP, user-agent, and metadata. Users can read their own history
+  (cursor-paginated). `location` is a seam for a geo-IP provider.
+
 ## Getting started
 
 ```bash
@@ -88,6 +102,10 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | `POST` | `/api/v1/account/change-email` | Bearer | Request email change |
 | `DELETE`| `/api/v1/account` | Bearer | Soft-delete account |
 | `GET`  | `/api/v1/account/availability` | — | Username/email availability |
+| `GET`  | `/api/v1/sessions` | Bearer | List active device sessions |
+| `DELETE`| `/api/v1/sessions` | Bearer | Log out other devices |
+| `DELETE`| `/api/v1/sessions/:id` | Bearer | Revoke a specific session |
+| `GET`  | `/api/v1/audit-logs` | Bearer | Read own audit history |
 | `GET`  | `/api/v1/health/live` | — | Liveness |
 | `GET`  | `/api/v1/health/ready` | — | Readiness (DB check) |
 

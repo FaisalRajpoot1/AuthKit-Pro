@@ -36,7 +36,7 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 
 export async function logout(req: Request, res: Response): Promise<void> {
   const rawToken = req.cookies?.[REFRESH_COOKIE_NAME] as string | undefined;
-  await authService.logout(rawToken);
+  await authService.logout(rawToken, getContext(req));
   clearRefreshCookie(res);
   res.status(204).send();
 }

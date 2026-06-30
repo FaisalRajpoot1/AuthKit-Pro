@@ -5,6 +5,8 @@ import { logger } from '../../lib/logger';
 import { prisma } from '../../lib/prisma';
 import { generateOpaqueToken, hashToken } from '../../lib/tokens';
 import { ConflictError, NotFoundError, ValidationError } from '../../utils/errors';
+import { recordAudit } from '../audit/audit.service';
+import type { RequestContext } from '../auth/auth.types';
 
 const MS_PER_HOUR = 60 * 60 * 1000;
 
@@ -56,7 +58,7 @@ export async function resendVerification(userId: string): Promise<void> {
 }
 
 /** Consume an EMAIL_VERIFICATION token and mark the account verified. */
-export async function verifyEmail(rawToken: string): Promise<void> {
+export async function verifyEmail(rawToken: string, context: RequestContext): Promise<void> {
   const record = await prisma.verificationToken.findUnique({
     where: { tokenHash: hashToken(rawToken) },
   });
@@ -80,10 +82,14 @@ export async function verifyEmail(rawToken: string): Promise<void> {
   ]);
 
   logger.info({ userId: record.userId }, 'Email verified');
+  await recordAudit({ action: 'EMAIL_VERIFIED', userId: record.userId, context });
 }
 
 /** Consume an EMAIL_CHANGE token and apply the new email address. */
-export async function confirmEmailChange(rawToken: string): Promise<void> {
+export async function confirmEmailChange(
+  rawToken: string,
+  context: RequestContext,
+): Promise<void> {
   const record = await prisma.verificationToken.findUnique({
     where: { tokenHash: hashToken(rawToken) },
   });
@@ -117,4 +123,5 @@ export async function confirmEmailChange(rawToken: string): Promise<void> {
   }
 
   logger.info({ userId: record.userId }, 'Email address changed');
+  await recordAudit({ action: 'EMAIL_CHANGED', userId: record.userId, context });
 }
