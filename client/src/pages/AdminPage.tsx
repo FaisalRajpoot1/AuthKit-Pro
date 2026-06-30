@@ -1,29 +1,36 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, TextField } from '@/components/ui';
+import { AuditTab } from '@/components/admin/AuditTab';
+import { OrganizationsTab } from '@/components/admin/OrganizationsTab';
+import { OverviewTab } from '@/components/admin/OverviewTab';
+import { RolesTab } from '@/components/admin/RolesTab';
+import { UsersTab } from '@/components/admin/UsersTab';
 import { useAuth } from '@/features/auth/AuthContext';
-import {
-  createRole,
-  deleteRole,
-  listPermissions,
-  listRoles,
-  setRolePermissions,
-  type Permission,
-  type Role,
-} from '@/features/admin/admin.api';
-import { getApiErrorMessage } from '@/lib/apiError';
 
-const ROLES_KEY = ['admin-roles'];
+interface TabDef {
+  key: string;
+  label: string;
+  permission: string;
+  render: () => JSX.Element;
+}
 
 export function AdminPage(): JSX.Element {
   const { hasPermission } = useAuth();
-  const canManage = hasPermission('roles:manage');
+  const canManageRoles = hasPermission('roles:manage');
+  const canManageUsers = hasPermission('users:manage');
 
-  const rolesQuery = useQuery({ queryKey: ROLES_KEY, queryFn: listRoles });
-  const permissionsQuery = useQuery({ queryKey: ['admin-permissions'], queryFn: listPermissions });
+  const tabs: TabDef[] = [
+    { key: 'overview', label: 'Overview', permission: 'users:read', render: () => <OverviewTab /> },
+    { key: 'users', label: 'Users', permission: 'users:read', render: () => <UsersTab canManage={canManageUsers} /> },
+    { key: 'roles', label: 'Roles', permission: 'roles:read', render: () => <RolesTab canManage={canManageRoles} /> },
+    { key: 'audit', label: 'Audit log', permission: 'audit_logs:read', render: () => <AuditTab /> },
+    { key: 'orgs', label: 'Organizations', permission: 'organizations:manage', render: () => <OrganizationsTab /> },
+  ];
 
-  if (!hasPermission('roles:read')) {
+  const visibleTabs = tabs.filter((tab) => hasPermission(tab.permission));
+  const [active, setActive] = useState(visibleTabs[0]?.key ?? 'overview');
+
+  if (visibleTabs.length === 0) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
         <h1 className="text-xl font-semibold text-slate-800">Not authorized</h1>
@@ -35,144 +42,35 @@ export function AdminPage(): JSX.Element {
     );
   }
 
+  const activeTab = visibleTabs.find((tab) => tab.key === active) ?? visibleTabs[0]!;
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
-      <header className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Roles &amp; permissions</h1>
+    <div className="mx-auto max-w-5xl px-4 py-12">
+      <header className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-900">Admin</h1>
         <Link to="/dashboard" className="text-sm font-semibold text-indigo-600 hover:underline">
           Back to dashboard
         </Link>
       </header>
 
-      {canManage ? <CreateRole /> : null}
-
-      <div className="mt-6 flex flex-col gap-4">
-        {rolesQuery.isLoading ? <p className="text-sm text-slate-500">Loading roles…</p> : null}
-        {(rolesQuery.data ?? []).map((role) => (
-          <RoleCard
-            key={role.id}
-            role={role}
-            permissions={permissionsQuery.data ?? []}
-            canManage={canManage}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CreateRole(): JSX.Element {
-  const queryClient = useQueryClient();
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const mutation = useMutation({
-    mutationFn: () => createRole({ name: name.trim(), description: description.trim() || undefined }),
-    onSuccess: () => {
-      setName('');
-      setDescription('');
-      setError(null);
-      void queryClient.invalidateQueries({ queryKey: ROLES_KEY });
-    },
-    onError: (err) => setError(getApiErrorMessage(err)),
-  });
-
-  return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-      <h2 className="mb-4 text-lg font-semibold text-slate-800">Create a role</h2>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <TextField label="Name" placeholder="content-editor" value={name} onChange={(e) => setName(e.target.value)} />
-        </div>
-        <div className="flex-1">
-          <TextField
-            label="Description"
-            placeholder="Optional"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-        <Button type="button" onClick={() => mutation.mutate()} loading={mutation.isPending}>
-          Create
-        </Button>
-      </div>
-      {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
-    </section>
-  );
-}
-
-function RoleCard({
-  role,
-  permissions,
-  canManage,
-}: {
-  role: Role;
-  permissions: Permission[];
-  canManage: boolean;
-}): JSX.Element {
-  const queryClient = useQueryClient();
-  const granted = new Set(role.permissions);
-
-  const update = useMutation({
-    mutationFn: (keys: string[]) => setRolePermissions(role.id, keys),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ROLES_KEY }),
-  });
-  const remove = useMutation({
-    mutationFn: () => deleteRole(role.id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ROLES_KEY }),
-  });
-
-  const toggle = (key: string): void => {
-    const next = new Set(granted);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
-    update.mutate([...next]);
-  };
-
-  return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-      <div className="mb-3 flex items-start justify-between">
-        <div>
-          <h3 className="flex items-center gap-2 text-base font-semibold text-slate-800">
-            {role.name}
-            {role.isSystem ? (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
-                system
-              </span>
-            ) : null}
-          </h3>
-          <p className="text-xs text-slate-500">
-            {role.description ?? 'No description'} · {role.userCount} user
-            {role.userCount === 1 ? '' : 's'}
-          </p>
-        </div>
-        {canManage && !role.isSystem ? (
+      <nav className="mb-6 flex flex-wrap gap-1 border-b border-slate-200">
+        {visibleTabs.map((tab) => (
           <button
+            key={tab.key}
             type="button"
-            onClick={() => remove.mutate()}
-            disabled={remove.isPending}
-            className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+            onClick={() => setActive(tab.key)}
+            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition ${
+              tab.key === activeTab.key
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
           >
-            Delete
+            {tab.label}
           </button>
-        ) : null}
-      </div>
-
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {permissions.map((permission) => (
-          <label key={permission.key} className="flex items-center gap-2 text-sm text-slate-600">
-            <input
-              type="checkbox"
-              checked={granted.has(permission.key)}
-              disabled={!canManage || update.isPending}
-              onChange={() => toggle(permission.key)}
-              className="h-4 w-4 rounded border-slate-300"
-            />
-            <span className="font-mono text-xs">{permission.key}</span>
-          </label>
         ))}
-      </div>
-    </section>
+      </nav>
+
+      {activeTab.render()}
+    </div>
   );
 }

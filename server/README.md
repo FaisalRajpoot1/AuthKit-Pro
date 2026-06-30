@@ -112,6 +112,19 @@ src/
 - Authorization is enforced per request via `requireMembership(orgId, minRole)`.
 - All organization/team actions are audit-logged.
 
+## Phase 6A — Admin Dashboard
+
+- **Stats overview**: total/active/verified/2FA users, new signups (7d/30d),
+  organization count, active sessions.
+- **User management**: paginated, searchable user list; activate/deactivate a
+  user (deactivation revokes all their sessions); assign roles.
+- **Audit log**: org-wide audit trail across all users, filterable, paginated.
+- **Organizations**: searchable list of all organizations with owner + member
+  counts.
+- Every endpoint is permission-guarded (`users:read`, `users:manage`,
+  `audit_logs:read`, `organizations:manage`); the client renders only the tabs
+  the signed-in admin is allowed to see.
+
 ## Getting started
 
 ```bash
@@ -179,6 +192,11 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | `PUT`  | `/api/v1/admin/roles/:id/permissions` | `roles:manage` | Set role permissions |
 | `GET`  | `/api/v1/admin/permissions` | `permissions:read` | List permissions |
 | `PUT`  | `/api/v1/admin/users/:id/roles` | `users:manage` | Assign roles to a user |
+| `GET`  | `/api/v1/admin/stats` | `users:read` | Dashboard statistics |
+| `GET`  | `/api/v1/admin/users` | `users:read` | List/search users (paginated) |
+| `PATCH`| `/api/v1/admin/users/:id/status` | `users:manage` | Activate/deactivate a user |
+| `GET`  | `/api/v1/admin/audit-logs` | `audit_logs:read` | All-users audit log |
+| `GET`  | `/api/v1/admin/organizations` | `organizations:manage` | List all organizations |
 | `POST` | `/api/v1/organizations` | Bearer | Create an organization |
 | `GET`  | `/api/v1/organizations` | Bearer | List my organizations |
 | `POST` | `/api/v1/organizations/:id/invites` | org ADMIN | Invite a member by email |

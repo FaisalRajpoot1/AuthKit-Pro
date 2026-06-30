@@ -1,3 +1,4 @@
+import { AuditAction } from '@prisma/client';
 import { z } from 'zod';
 
 const roleNameSchema = z
@@ -22,6 +23,23 @@ export const setRolePermissionsSchema = z.object({
 
 export const setUserRolesSchema = z.object({
   roleIds: z.array(z.string().uuid()),
+});
+
+export const setUserActiveSchema = z.object({
+  isActive: z.boolean(),
+});
+
+export const adminListQuerySchema = z.object({
+  search: z.string().max(120).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  cursor: z.string().uuid().optional(),
+});
+
+export const adminAuditQuerySchema = z.object({
+  userId: z.string().uuid().optional(),
+  action: z.nativeEnum(AuditAction).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  cursor: z.string().uuid().optional(),
 });
 
 export type CreateRoleInput = z.infer<typeof createRoleSchema>;

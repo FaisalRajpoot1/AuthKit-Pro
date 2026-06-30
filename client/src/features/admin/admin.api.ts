@@ -45,3 +45,77 @@ export async function setRolePermissions(id: string, permissionKeys: string[]): 
   });
   return data.role;
 }
+
+// ── Dashboard ────────────────────────────────────────────────────────────────
+
+export interface AdminStats {
+  users: { total: number; active: number; verified: number; twoFactor: number; new7d: number; new30d: number };
+  organizations: number;
+  activeSessions: number;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  username: string;
+  displayName: string | null;
+  isActive: boolean;
+  emailVerified: boolean;
+  twoFactorEnabled: boolean;
+  roles: string[];
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  action: string;
+  userId: string | null;
+  userEmail: string | null;
+  ipAddress: string | null;
+  createdAt: string;
+}
+
+export interface AdminOrganization {
+  id: string;
+  name: string;
+  slug: string;
+  ownerEmail: string;
+  memberCount: number;
+  createdAt: string;
+}
+
+export interface Page<T> {
+  items: T[];
+  nextCursor: string | null;
+}
+
+export async function getStats(): Promise<AdminStats> {
+  const { data } = await apiClient.get<AdminStats>('/admin/stats');
+  return data;
+}
+
+export async function listUsers(
+  params: { search?: string | undefined; cursor?: string | undefined } = {},
+): Promise<Page<AdminUser>> {
+  const { data } = await apiClient.get<Page<AdminUser>>('/admin/users', { params });
+  return data;
+}
+
+export async function setUserActive(id: string, isActive: boolean): Promise<void> {
+  await apiClient.patch(`/admin/users/${id}/status`, { isActive });
+}
+
+export async function listAdminAuditLogs(
+  params: { cursor?: string | undefined } = {},
+): Promise<Page<AdminAuditLog>> {
+  const { data } = await apiClient.get<Page<AdminAuditLog>>('/admin/audit-logs', { params });
+  return data;
+}
+
+export async function listAdminOrganizations(
+  params: { search?: string | undefined; cursor?: string | undefined } = {},
+): Promise<Page<AdminOrganization>> {
+  const { data } = await apiClient.get<Page<AdminOrganization>>('/admin/organizations', { params });
+  return data;
+}

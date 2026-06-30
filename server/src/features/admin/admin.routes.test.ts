@@ -28,4 +28,19 @@ describe('admin route guards', () => {
       .send({ roleIds: [] });
     expect(res.status).toBe(401);
   });
+
+  it('rejects stats without auth (401)', async () => {
+    const res = await request(app).get('/api/v1/admin/stats');
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects listing users without auth (401)', async () => {
+    const res = await request(app).get('/api/v1/admin/users');
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects the admin audit log without auth (401)', async () => {
+    const res = await request(app).get('/api/v1/admin/audit-logs');
+    expect(res.status).toBe(401);
+  });
 });

@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "audit_action" ADD VALUE 'ADMIN_USER_STATUS_CHANGED';

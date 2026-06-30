@@ -4,17 +4,40 @@ import { requirePermission } from '../../middleware/rbac.middleware';
 import { validateBody } from '../../middleware/validate.middleware';
 import { asyncHandler } from '../../utils/asyncHandler';
 import * as controller from './admin.controller';
+import * as dashboard from './adminDashboard.controller';
 import {
   createRoleSchema,
   setRolePermissionsSchema,
+  setUserActiveSchema,
   setUserRolesSchema,
   updateRoleSchema,
 } from './admin.schema';
 
-/** Administrative RBAC management, mounted at /api/v1/admin. */
+/** Administrative dashboard + RBAC management, mounted at /api/v1/admin. */
 export const adminRouter = Router();
 
 adminRouter.use(requireAuth);
+
+// Dashboard
+adminRouter.get('/stats', requirePermission('users:read'), asyncHandler(dashboard.stats));
+adminRouter.get('/users', requirePermission('users:read'), asyncHandler(dashboard.listUsers));
+adminRouter.get('/users/:id', requirePermission('users:read'), asyncHandler(dashboard.getUser));
+adminRouter.patch(
+  '/users/:id/status',
+  requirePermission('users:manage'),
+  validateBody(setUserActiveSchema),
+  asyncHandler(dashboard.setUserActive),
+);
+adminRouter.get(
+  '/audit-logs',
+  requirePermission('audit_logs:read'),
+  asyncHandler(dashboard.listAuditLogs),
+);
+adminRouter.get(
+  '/organizations',
+  requirePermission('organizations:manage'),
+  asyncHandler(dashboard.listOrganizations),
+);
 
 adminRouter.get('/permissions', requirePermission('permissions:read'), asyncHandler(controller.listPermissions));
 
