@@ -27,7 +27,39 @@ See **[reqs.md](reqs.md)** for the full feature specification and **[MASTER_PROJ
 
 ## Getting Started
 
-> Setup instructions will be added as the `client/` and `server/` workspaces are scaffolded.
+### Option A — Docker (everything in one command)
+
+```bash
+cp .env.example .env     # set JWT_ACCESS_SECRET and JWT_REFRESH_SECRET
+docker compose up --build
+```
+
+- Client → http://localhost:8080
+- API → http://localhost:4000/api/v1
+- The server applies pending Prisma migrations on startup.
+
+Generate secrets:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
+
+### Option B — Run workspaces locally (infra in Docker)
+
+```bash
+docker compose up -d db redis     # Postgres + Redis only
+# server
+cd server && cp .env.example .env && npm install && npm run prisma:migrate && npm run dev
+# client (new terminal)
+cd client && npm install && npm run dev
+```
+
+See **[server/README.md](server/README.md)** and **[client/README.md](client/README.md)** for details.
+
+## Continuous Integration
+
+GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs lint,
+typecheck, tests, and build for both workspaces on every push and pull request.
 
 ## License
 
