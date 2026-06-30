@@ -53,10 +53,16 @@ export async function logout(): Promise<void> {
   setAccessToken(null);
 }
 
-/** Fetch the current user. Used to restore a session via the refresh cookie. */
-export async function fetchMe(): Promise<User> {
-  const { data } = await apiClient.get<{ user: User }>('/auth/me');
-  return data.user;
+export interface Profile {
+  user: User;
+  roles: string[];
+  permissions: string[];
+}
+
+/** Fetch the current user + RBAC. Restores a session via the refresh cookie. */
+export async function fetchMe(): Promise<Profile> {
+  const { data } = await apiClient.get<Profile>('/auth/me');
+  return data;
 }
 
 /** Request a password-reset link (always succeeds, even for unknown emails). */

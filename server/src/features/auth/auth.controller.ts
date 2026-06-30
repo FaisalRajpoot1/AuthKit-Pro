@@ -7,6 +7,7 @@ import {
   setTrustedDeviceCookie,
   TRUSTED_DEVICE_COOKIE_NAME,
 } from './auth.cookies';
+import { getUserRbac } from '../rbac/rbac.service';
 import * as authService from './auth.service';
 import type { RequestContext } from './auth.types';
 
@@ -66,6 +67,9 @@ export async function logout(req: Request, res: Response): Promise<void> {
 
 export async function me(req: Request, res: Response): Promise<void> {
   // `requireAuth` guarantees req.user is present.
-  const user = await authService.getProfile(req.user!.id);
-  res.status(200).json({ user });
+  const [user, rbac] = await Promise.all([
+    authService.getProfile(req.user!.id),
+    getUserRbac(req.user!.id),
+  ]);
+  res.status(200).json({ user, roles: rbac.roles, permissions: rbac.permissions });
 }

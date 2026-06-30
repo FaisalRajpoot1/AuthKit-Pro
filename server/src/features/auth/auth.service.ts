@@ -13,6 +13,7 @@ import {
   revokeSession,
   touchSession,
 } from '../sessions/sessions.service';
+import { assignDefaultRole } from '../rbac/rbac.service';
 import {
   isTrustedDevice,
   registerTrustedDevice,
@@ -83,6 +84,7 @@ export async function register(input: RegisterInput, context: RequestContext): P
   });
 
   const tokens = await prisma.$transaction(async (tx) => {
+    await assignDefaultRole(user.id, tx);
     const session = await createSession(user.id, context, refreshExpiry(), tx);
     return issueTokens(user, session.id, session.expiresAt, tx);
   });

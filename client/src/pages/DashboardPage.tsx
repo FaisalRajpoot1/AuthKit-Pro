@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ActivityCard } from '@/components/ActivityCard';
 import { ConnectedAccountsCard } from '@/components/ConnectedAccountsCard';
 import { SessionsCard } from '@/components/SessionsCard';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthContext';
 
 export function DashboardPage(): JSX.Element {
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async (): Promise<void> => {
@@ -19,9 +19,16 @@ export function DashboardPage(): JSX.Element {
     <div className="mx-auto max-w-3xl px-4 py-12">
       <header className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <Button type="button" onClick={handleLogout}>
-          Sign out
-        </Button>
+        <div className="flex items-center gap-4">
+          {hasPermission('roles:read') ? (
+            <Link to="/admin" className="text-sm font-semibold text-indigo-600 hover:underline">
+              Admin
+            </Link>
+          ) : null}
+          <Button type="button" onClick={handleLogout}>
+            Sign out
+          </Button>
+        </div>
       </header>
 
       <div className="flex flex-col gap-6">

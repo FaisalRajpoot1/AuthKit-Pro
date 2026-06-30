@@ -85,6 +85,23 @@ src/
   six providers from the spec is the same shape. A provider is active only when
   its client id/secret are configured.
 
+## Phase 5A — RBAC & Permission System
+
+- **Roles + granular permissions** (`resource:action`, e.g. `users:manage`).
+  Six seeded **system roles** (admin · moderator · manager · editor · customer ·
+  guest); admins can create custom roles and set their permissions.
+- **Middleware**: `requireRole(name)` and `requirePermission('resource:action')`
+  resolve a user's effective permissions per request.
+- New users are granted the **default `customer` role** on registration.
+- `GET /auth/me` now returns the caller's `roles` and `permissions`.
+- **Seed** the catalog and system roles (idempotent):
+
+  ```bash
+  npm run prisma:seed
+  ```
+
+- All role/permission changes are audit-logged.
+
 ## Getting started
 
 ```bash
@@ -145,6 +162,13 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | `GET`  | `/api/v1/auth/oauth/:provider/link` | Bearer | Get link authorization URL |
 | `GET`  | `/api/v1/auth/oauth/accounts` | Bearer | List linked accounts |
 | `DELETE`| `/api/v1/auth/oauth/:provider` | Bearer | Unlink a provider |
+| `GET`  | `/api/v1/admin/roles` | `roles:read` | List roles |
+| `POST` | `/api/v1/admin/roles` | `roles:manage` | Create a role |
+| `PATCH`| `/api/v1/admin/roles/:id` | `roles:manage` | Update a role |
+| `DELETE`| `/api/v1/admin/roles/:id` | `roles:manage` | Delete a custom role |
+| `PUT`  | `/api/v1/admin/roles/:id/permissions` | `roles:manage` | Set role permissions |
+| `GET`  | `/api/v1/admin/permissions` | `permissions:read` | List permissions |
+| `PUT`  | `/api/v1/admin/users/:id/roles` | `users:manage` | Assign roles to a user |
 | `GET`  | `/api/v1/health/live` | — | Liveness |
 | `GET`  | `/api/v1/health/ready` | — | Readiness (DB check) |
 

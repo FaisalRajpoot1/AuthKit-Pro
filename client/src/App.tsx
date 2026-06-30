@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { confirmEmailChange, verifyEmail } from '@/features/auth/auth.api';
+import { AdminPage } from '@/pages/AdminPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -42,6 +43,7 @@ export function App(): JSX.Element {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
