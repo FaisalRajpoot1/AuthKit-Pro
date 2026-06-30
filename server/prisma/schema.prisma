@@ -40,6 +40,7 @@ model User {
   auditLogs          AuditLog[]
   backupCodes        BackupCode[]
   trustedDevices     TrustedDevice[]
+  oauthAccounts      OAuthAccount[]
 
   @@index([deletedAt])
   @@map("users")
@@ -174,6 +175,34 @@ model TrustedDevice {
   @@map("trusted_devices")
 }
 
+/// Supported third-party identity providers.
+enum OAuthProvider {
+  GOOGLE
+  GITHUB
+
+  @@map("oauth_provider")
+}
+
+/// A linked third-party identity. A user may link several providers; each
+/// external identity (provider + account id) maps to at most one user.
+model OAuthAccount {
+  id                String        @id @default(uuid()) @db.Uuid
+  userId            String        @map("user_id") @db.Uuid
+  provider          OAuthProvider
+  providerAccountId String        @map("provider_account_id")
+  email             String?
+  displayName       String?       @map("display_name")
+  avatarUrl         String?       @map("avatar_url")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
 /// Auditable actions tracked for security and compliance.
 enum AuditAction {
   USER_REGISTERED
@@ -196,6 +225,9 @@ enum AuditAction {
   TWO_FACTOR_CHALLENGE_SUCCEEDED
   TWO_FACTOR_CHALLENGE_FAILED
   BACKUP_CODES_REGENERATED
+  OAUTH_LOGIN
+  OAUTH_ACCOUNT_LINKED
+  OAUTH_ACCOUNT_UNLINKED
 
   @@map("audit_action")
 }

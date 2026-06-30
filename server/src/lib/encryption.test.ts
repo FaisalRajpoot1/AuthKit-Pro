@@ -14,7 +14,7 @@ describe('encryption (AES-256-GCM)', () => {
 
   it('rejects tampered ciphertext', () => {
     const serialized = encrypt('secret');
-    const [iv, tag, data] = serialized.split('.');
+    const [iv, tag] = serialized.split('.');
     const tampered = [iv, tag, Buffer.from('different').toString('base64')].join('.');
     expect(() => decrypt(tampered)).toThrow();
   });

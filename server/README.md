@@ -69,6 +69,22 @@ src/
 - Backup codes are hashed at rest and single-use; reuse of a backup code is
   impossible. All 2FA actions are audit-logged.
 
+## Phase 4B — OAuth (Google + GitHub)
+
+- **Sign in / sign up with Google or GitHub.** Existing accounts are matched by
+  verified email and linked automatically; otherwise a new account is created
+  (random password the user can reset later).
+- **Account linking/unlinking** for signed-in users. Unlink is refused if it
+  would lock the user out (no other provider and no verified email to reset a
+  password). Each external identity maps to at most one user.
+- **SPA-friendly flow**: the client fetches an authorization URL (which sets a
+  signed, httpOnly **state cookie** for CSRF), navigates to the provider, and
+  the callback sets the refresh cookie and bounces back to the app, which then
+  refreshes to obtain its access token.
+- Providers are a pluggable strategy (`OAuthProviderClient`); adding the other
+  six providers from the spec is the same shape. A provider is active only when
+  its client id/secret are configured.
+
 ## Getting started
 
 ```bash
@@ -124,6 +140,11 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | `POST` | `/api/v1/account/2fa/enable` | Bearer | Confirm code, enable, get backup codes |
 | `POST` | `/api/v1/account/2fa/disable` | Bearer | Disable 2FA (password) |
 | `POST` | `/api/v1/account/2fa/backup-codes` | Bearer | Regenerate backup codes |
+| `GET`  | `/api/v1/auth/oauth/:provider/url` | — | Get sign-in authorization URL |
+| `GET`  | `/api/v1/auth/oauth/:provider/callback` | — | Provider redirect target |
+| `GET`  | `/api/v1/auth/oauth/:provider/link` | Bearer | Get link authorization URL |
+| `GET`  | `/api/v1/auth/oauth/accounts` | Bearer | List linked accounts |
+| `DELETE`| `/api/v1/auth/oauth/:provider` | Bearer | Unlink a provider |
 | `GET`  | `/api/v1/health/live` | — | Liveness |
 | `GET`  | `/api/v1/health/ready` | — | Readiness (DB check) |
 

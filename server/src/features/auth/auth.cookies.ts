@@ -46,3 +46,29 @@ export function setTrustedDeviceCookie(res: Response, token: string, expiresAt: 
     expires: expiresAt,
   });
 }
+
+/** Short-lived CSRF state for the OAuth round-trip. */
+export const OAUTH_STATE_COOKIE_NAME = 'authkit_oauth_state';
+const OAUTH_STATE_PATH = '/api/v1/auth/oauth';
+
+export function setOAuthStateCookie(res: Response, state: string): void {
+  res.cookie(OAUTH_STATE_COOKIE_NAME, state, {
+    httpOnly: true,
+    secure: isProduction || env.COOKIE_SECURE,
+    // 'lax' allows the cookie to ride the top-level redirect back from the provider.
+    sameSite: 'lax',
+    domain: env.COOKIE_DOMAIN,
+    path: OAUTH_STATE_PATH,
+    maxAge: 10 * 60 * 1000,
+  });
+}
+
+export function clearOAuthStateCookie(res: Response): void {
+  res.clearCookie(OAUTH_STATE_COOKIE_NAME, {
+    httpOnly: true,
+    secure: isProduction || env.COOKIE_SECURE,
+    sameSite: 'lax',
+    domain: env.COOKIE_DOMAIN,
+    path: OAUTH_STATE_PATH,
+  });
+}

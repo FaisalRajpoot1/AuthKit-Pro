@@ -4,6 +4,7 @@ import { authRateLimiter } from '../../middleware/rateLimit.middleware';
 import { validateBody } from '../../middleware/validate.middleware';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { emailVerificationRouter } from '../email-verification/emailVerification.routes';
+import { oauthRouter } from '../oauth/oauth.routes';
 import { passwordResetRouter } from '../password-reset/passwordReset.routes';
 import * as authController from './auth.controller';
 import { loginSchema, registerSchema, twoFactorLoginSchema } from './auth.schema';
@@ -14,9 +15,10 @@ import { loginSchema, registerSchema, twoFactorLoginSchema } from './auth.schema
  */
 export const authRouter = Router();
 
-// Sub-flows: /auth/email/* and /auth/password/*
+// Sub-flows: /auth/email/*, /auth/password/*, /auth/oauth/*
 authRouter.use('/email', emailVerificationRouter);
 authRouter.use('/password', passwordResetRouter);
+authRouter.use('/oauth', oauthRouter);
 
 authRouter.post(
   '/register',

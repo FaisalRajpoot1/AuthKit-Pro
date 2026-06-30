@@ -71,3 +71,47 @@ export function verifyTwoFactorChallenge(token: string): { userId: string } {
     throw new UnauthorizedError('Invalid or expired challenge token');
   }
 }
+
+const OAUTH_AUDIENCE = 'authkit-oauth';
+
+/** Signed, short-lived OAuth state binding the CSRF nonce, intent, and linker. */
+export interface OAuthStatePayload {
+  provider: string;
+  intent: 'login' | 'link';
+  userId?: string;
+  nonce: string;
+}
+
+export function signOAuthState(payload: OAuthStatePayload): string {
+  return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    expiresIn: '10m',
+    issuer: 'authkit',
+    audience: OAUTH_AUDIENCE,
+  });
+}
+
+export function verifyOAuthState(token: string): OAuthStatePayload {
+  try {
+    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET, {
+      issuer: 'authkit',
+      audience: OAUTH_AUDIENCE,
+    });
+    if (
+      typeof decoded === 'string' ||
+      typeof decoded.provider !== 'string' ||
+      (decoded.intent !== 'login' && decoded.intent !== 'link') ||
+      typeof decoded.nonce !== 'string'
+    ) {
+      throw new UnauthorizedError('Invalid OAuth state');
+    }
+    return {
+      provider: decoded.provider,
+      intent: decoded.intent,
+      nonce: decoded.nonce,
+      ...(typeof decoded.userId === 'string' ? { userId: decoded.userId } : {}),
+    };
+  } catch (error) {
+    if (error instanceof UnauthorizedError) throw error;
+    throw new UnauthorizedError('Invalid or expired OAuth state');
+  }
+}

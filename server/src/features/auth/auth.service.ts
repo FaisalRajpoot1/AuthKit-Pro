@@ -101,7 +101,7 @@ export async function register(input: RegisterInput, context: RequestContext): P
 }
 
 /** Creates a session and issues a fresh token pair for an authenticated user. */
-async function issueAuthenticatedSession(
+export async function issueAuthenticatedSession(
   user: User,
   context: RequestContext,
 ): Promise<AuthResult> {

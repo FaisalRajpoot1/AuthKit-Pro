@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, TextField } from '@/components/ui';
+import { OAuthButtons } from '@/components/OAuthButtons';
 import { useAuth } from '@/features/auth/AuthContext';
 import { registerFormSchema, type RegisterFormValues } from '@/features/auth/auth.types';
 import { getApiErrorMessage } from '@/lib/apiError';
@@ -67,6 +68,9 @@ export function RegisterPage(): JSX.Element {
           Create account
         </Button>
       </form>
+      <div className="mt-6">
+        <OAuthButtons />
+      </div>
       <p className="mt-6 text-center text-sm text-slate-500">
         Already have an account?{' '}
         <Link to="/login" className="font-semibold text-indigo-600 hover:underline">

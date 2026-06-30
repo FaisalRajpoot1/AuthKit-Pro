@@ -53,6 +53,13 @@ const envSchema = z.object({
   TOTP_ISSUER: z.string().default('AuthKit Pro'),
   TRUSTED_DEVICE_TTL_DAYS: z.coerce.number().int().positive().default(30),
 
+  // OAuth. Public base URL of THIS API (for building provider redirect URIs).
+  SERVER_PUBLIC_URL: z.string().url().default('http://localhost:4000'),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GITHUB_CLIENT_ID: z.string().optional(),
+  GITHUB_CLIENT_SECRET: z.string().optional(),
+
   // Email delivery. When SMTP_HOST is unset, emails are logged to the console
   // (development) instead of sent — handy for local flows without a mailserver.
   EMAIL_FROM: z.string().default('AuthKit Pro <no-reply@authkit.local>'),

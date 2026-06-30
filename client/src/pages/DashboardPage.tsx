@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { ActivityCard } from '@/components/ActivityCard';
+import { ConnectedAccountsCard } from '@/components/ConnectedAccountsCard';
 import { SessionsCard } from '@/components/SessionsCard';
 import { TwoFactorCard } from '@/components/TwoFactorCard';
 import { Button } from '@/components/ui';
@@ -35,6 +36,7 @@ export function DashboardPage(): JSX.Element {
         </section>
 
         <TwoFactorCard />
+        <ConnectedAccountsCard />
         <SessionsCard />
         <ActivityCard />
       </div>
