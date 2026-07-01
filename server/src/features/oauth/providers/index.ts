@@ -2,8 +2,10 @@ import { OAuthProvider } from '@prisma/client';
 import { NotFoundError } from '../../../utils/errors';
 import type { OAuthProviderClient } from '../oauth.types';
 import { discordProvider } from './discord.provider';
+import { facebookProvider } from './facebook.provider';
 import { githubProvider } from './github.provider';
 import { googleProvider } from './google.provider';
+import { linkedinProvider } from './linkedin.provider';
 import { microsoftProvider } from './microsoft.provider';
 
 const PROVIDERS: Record<OAuthProvider, OAuthProviderClient> = {
@@ -11,6 +13,8 @@ const PROVIDERS: Record<OAuthProvider, OAuthProviderClient> = {
   GITHUB: githubProvider,
   MICROSOFT: microsoftProvider,
   DISCORD: discordProvider,
+  FACEBOOK: facebookProvider,
+  LINKEDIN: linkedinProvider,
 };
 
 /** Parses a URL slug into a known provider enum, or throws 404. */

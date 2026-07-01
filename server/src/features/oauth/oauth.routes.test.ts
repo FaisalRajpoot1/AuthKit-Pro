@@ -18,8 +18,8 @@ describe('oauth routes', () => {
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 
-  it('recognizes microsoft and discord providers (400 when unconfigured)', async () => {
-    for (const provider of ['microsoft', 'discord']) {
+  it('recognizes microsoft/discord/facebook/linkedin providers (400 when unconfigured)', async () => {
+    for (const provider of ['microsoft', 'discord', 'facebook', 'linkedin']) {
       const res = await request(app).get(`/api/v1/auth/oauth/${provider}/url`);
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');

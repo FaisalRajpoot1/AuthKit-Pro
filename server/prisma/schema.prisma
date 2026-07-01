@@ -195,6 +195,8 @@ enum OAuthProvider {
   GITHUB
   MICROSOFT
   DISCORD
+  FACEBOOK
+  LINKEDIN
 
   @@map("oauth_provider")
 }

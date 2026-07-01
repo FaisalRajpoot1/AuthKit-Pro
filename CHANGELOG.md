@@ -6,6 +6,9 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **More OAuth providers** (Module 4): added Facebook Login and "Sign in with
+  LinkedIn" (OpenID Connect), bringing the shipped set to six (Google, GitHub,
+  Microsoft, Discord, Facebook, LinkedIn) via the pluggable provider strategy.
 - **IP blocking** (Module 14): admins can block and unblock IP addresses
   (permanent or auto-expiring) via `/api/v1/admin/blocked-ips`; an early guard
   rejects requests from blocked IPs (403). The active set is cached in-process
