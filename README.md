@@ -10,12 +10,31 @@ A complete, reusable authentication infrastructure that other developers can dro
 AuthKit_Pro/
 ├── client/                 # React + Vite + TypeScript frontend
 ├── server/                 # Express + Prisma + PostgreSQL backend
+├── packages/               # Reusable @authkit/* libraries
+│   ├── core/               # @authkit/core     — framework-agnostic SDK
+│   ├── react/              # @authkit/react    — React bindings
+│   ├── express/            # @authkit/express  — Express middleware
+│   └── cli/                # @authkit/cli      — project CLI
+├── examples/               # Ready-to-run integrations
+│   └── express-api/        # Third-party API protected by @authkit/express
+├── docs/                   # Documentation
 ├── reqs.md                 # Full product requirements
 └── MASTER_PROJECT_GUIDE.md # Engineering standards & workflow
 ```
 
-- **[client/](client/)** — Frontend application (React, Vite, Redux Toolkit, React Query, Tailwind, Shadcn UI).
-- **[server/](server/)** — Backend API (Node.js, Express, Prisma, PostgreSQL, Redis, JWT).
+- **[client/](client/)** — Frontend application (React, Vite, React Query, Tailwind).
+- **[server/](server/)** — Backend API (Node.js, Express, Prisma, PostgreSQL, JWT).
+- **[packages/](packages/)** — Publishable SDK, React bindings, Express middleware, and CLI.
+- **[examples/](examples/)** — Runnable integrations of the packages.
+
+## Documentation
+
+Full docs live in **[docs/](docs/)**:
+[Getting Started](docs/getting-started.md) ·
+[Database Setup](docs/DATABASE_SETUP.md) ·
+[Architecture](docs/architecture.md) ·
+[Packages](docs/packages.md) ·
+[Deployment](docs/deployment.md).
 
 See **[reqs.md](reqs.md)** for the full feature specification and **[MASTER_PROJECT_GUIDE.md](MASTER_PROJECT_GUIDE.md)** for the engineering standards we build against.
 
