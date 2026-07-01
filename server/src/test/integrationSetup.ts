@@ -22,8 +22,10 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   // Truncating users cascades to all user-derived tables (sessions, tokens,
-  // memberships, orgs, audit logs); seeded roles/permissions remain.
-  await prisma.$executeRawUnsafe('TRUNCATE TABLE "users" RESTART IDENTITY CASCADE');
+  // memberships, orgs, audit logs); seeded roles/permissions remain. blocked_ips
+  // only *nullably* references users, so it is truncated explicitly to keep the
+  // IP-block guard from leaking state between tests.
+  await prisma.$executeRawUnsafe('TRUNCATE TABLE "users", "blocked_ips" RESTART IDENTITY CASCADE');
 });
 
 afterAll(async () => {

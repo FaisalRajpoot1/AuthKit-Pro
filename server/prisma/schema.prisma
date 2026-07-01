@@ -54,6 +54,7 @@ model User {
   loginAttempts           LoginAttempt[]
   passkeys                Passkey[]
   notifications           Notification[]
+  blockedIps              BlockedIp[]          @relation("BlockedIpCreator")
 
   @@index([deletedAt])
   @@map("users")
@@ -475,6 +476,23 @@ model LoginToken {
   @@map("login_tokens")
 }
 
+/// An IP address an administrator has blocked from reaching the API. A null
+/// `expiresAt` means a permanent block; otherwise it lapses at that time. The
+/// block guard consults an in-memory cache of the active set, refreshed lazily.
+model BlockedIp {
+  id        String    @id @default(uuid()) @db.Uuid
+  ipAddress String    @unique @map("ip_address")
+  reason    String?
+  createdBy String?   @map("created_by") @db.Uuid
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  creator User? @relation("BlockedIpCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([expiresAt])
+  @@map("blocked_ips")
+}
+
 /// A personal API key for programmatic access. The secret is shown once at
 /// creation and only its SHA-256 hash is stored. Scopes limit what it can do.
 model ApiKey {
@@ -548,6 +566,8 @@ enum AuditAction {
   PASSKEY_REGISTERED
   PASSKEY_REMOVED
   PASSKEY_LOGIN
+  IP_BLOCKED
+  IP_UNBLOCKED
 
   @@map("audit_action")
 }

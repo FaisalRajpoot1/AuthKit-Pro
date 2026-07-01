@@ -8,6 +8,7 @@ import { env } from './config/env';
 import { openApiDocument } from './docs/openapi';
 import { logger } from './lib/logger';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
+import { ipBlockGuard } from './middleware/ipBlock.middleware';
 import { apiRateLimiter } from './middleware/rateLimit.middleware';
 import { apiRouter } from './routes';
 
@@ -59,6 +60,9 @@ export function createApp(): Express {
 
   // Request logging.
   app.use(pinoHttp({ logger }));
+
+  // Turn away administrator-blocked IPs before any further processing.
+  app.use(API_PREFIX, ipBlockGuard);
 
   // Baseline rate limiting across the API surface.
   app.use(API_PREFIX, apiRateLimiter);

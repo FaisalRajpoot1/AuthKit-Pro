@@ -3,6 +3,8 @@ import { requireAuth } from '../../middleware/auth.middleware';
 import { requirePermission } from '../../middleware/rbac.middleware';
 import { validateBody } from '../../middleware/validate.middleware';
 import { asyncHandler } from '../../utils/asyncHandler';
+import * as ipBlocking from '../ip-blocking/ipBlocking.controller';
+import { blockIpSchema } from '../ip-blocking/ipBlocking.schema';
 import * as controller from './admin.controller';
 import * as dashboard from './adminDashboard.controller';
 import {
@@ -38,6 +40,20 @@ adminRouter.get(
   '/organizations',
   requirePermission('organizations:manage'),
   asyncHandler(dashboard.listOrganizations),
+);
+
+// IP blocking
+adminRouter.get('/blocked-ips', requirePermission('ip_blocks:read'), asyncHandler(ipBlocking.list));
+adminRouter.post(
+  '/blocked-ips',
+  requirePermission('ip_blocks:manage'),
+  validateBody(blockIpSchema),
+  asyncHandler(ipBlocking.block),
+);
+adminRouter.delete(
+  '/blocked-ips/:id',
+  requirePermission('ip_blocks:manage'),
+  asyncHandler(ipBlocking.unblock),
 );
 
 adminRouter.get('/permissions', requirePermission('permissions:read'), asyncHandler(controller.listPermissions));

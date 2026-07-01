@@ -6,6 +6,11 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **IP blocking** (Module 14): admins can block and unblock IP addresses
+  (permanent or auto-expiring) via `/api/v1/admin/blocked-ips`; an early guard
+  rejects requests from blocked IPs (403). The active set is cached in-process
+  (10s TTL, invalidated on change) and fails open on lookup errors. New
+  `ip_blocks:read` / `ip_blocks:manage` permissions.
 - **CAPTCHA support** (Module 14): pluggable, provider-agnostic bot protection
   (Cloudflare Turnstile / hCaptcha / reCAPTCHA) on register, login, forgot, and
   passwordless-request. Off by default; no-op when disabled; fails open on

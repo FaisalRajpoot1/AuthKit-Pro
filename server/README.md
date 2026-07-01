@@ -38,6 +38,9 @@ src/
   register/login/forgot/passwordless via Cloudflare Turnstile, hCaptcha, or
   reCAPTCHA. When enabled, clients send the token as `X-Captcha-Token`; fails
   open on provider outages
+- **IP blocking**: admins can block/unblock IP addresses (permanent or expiring)
+  under `/api/v1/admin/blocked-ips`; a guard turns blocked clients away early.
+  The active set is cached in-process and fails open on lookup errors
 
 ## Phase 2 — implemented
 

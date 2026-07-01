@@ -20,6 +20,8 @@ export const PERMISSIONS: readonly PermissionDef[] = [
   { resource: 'audit_logs', action: 'read', description: 'View all users’ audit logs' },
   { resource: 'settings', action: 'manage', description: 'Manage application settings' },
   { resource: 'organizations', action: 'manage', description: 'Administer organizations' },
+  { resource: 'ip_blocks', action: 'read', description: 'View blocked IP addresses' },
+  { resource: 'ip_blocks', action: 'manage', description: 'Block and unblock IP addresses' },
 ];
 
 export function permissionKey(p: Pick<PermissionDef, 'resource' | 'action'>): string {
@@ -40,12 +42,20 @@ export const SYSTEM_ROLES: readonly RoleDef[] = [
   {
     name: 'moderator',
     description: 'Moderates users and reviews activity',
-    permissions: ['users:read', 'users:manage', 'audit_logs:read', 'roles:read', 'permissions:read'],
+    permissions: [
+      'users:read',
+      'users:manage',
+      'audit_logs:read',
+      'roles:read',
+      'permissions:read',
+      'ip_blocks:read',
+      'ip_blocks:manage',
+    ],
   },
   {
     name: 'manager',
     description: 'Read access across administrative areas',
-    permissions: ['users:read', 'roles:read', 'audit_logs:read', 'permissions:read'],
+    permissions: ['users:read', 'roles:read', 'audit_logs:read', 'permissions:read', 'ip_blocks:read'],
   },
   { name: 'editor', description: 'Limited elevated access', permissions: ['users:read'] },
   { name: 'customer', description: 'Standard user', permissions: [] },

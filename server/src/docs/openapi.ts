@@ -303,6 +303,13 @@ export const openApiDocument = {
     '/admin/roles': {
       get: { tags: ['Admin'], summary: 'List roles', security: bearer, responses: { 200: jsonResponse('Roles', { type: 'object' }), 403: commonResponses[403] } },
     },
+    '/admin/blocked-ips': {
+      get: { tags: ['Admin'], summary: 'List blocked IPs', security: bearer, description: 'Requires the ip_blocks:read permission.', responses: { 200: jsonResponse('Blocked IPs', { type: 'object' }), 403: commonResponses[403] } },
+      post: { tags: ['Admin'], summary: 'Block an IP', security: bearer, description: 'Requires the ip_blocks:manage permission.', requestBody: jsonBody({ type: 'object', required: ['ipAddress'], properties: { ipAddress: { type: 'string' }, reason: { type: 'string' }, expiresAt: { type: 'string', format: 'date-time' } } }), responses: { 201: jsonResponse('Blocked', { type: 'object' }), 403: commonResponses[403], 409: commonResponses[409] } },
+    },
+    '/admin/blocked-ips/{id}': {
+      delete: { tags: ['Admin'], summary: 'Unblock an IP', security: bearer, description: 'Requires the ip_blocks:manage permission.', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: jsonResponse('Unblocked', { type: 'object' }), 403: commonResponses[403], 404: commonResponses[404] } },
+    },
 
     '/organizations': {
       get: { tags: ['Organizations'], summary: 'List my organizations', security: bearer, responses: { 200: jsonResponse('Organizations', { type: 'object' }), 401: commonResponses[401] } },
