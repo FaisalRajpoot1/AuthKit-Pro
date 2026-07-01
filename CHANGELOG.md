@@ -5,6 +5,11 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 
 ## [Unreleased]
 
+### Features
+- **API keys** (Module 19): personal keys with scopes, optional expiry, and
+  revoke. The secret is shown once and hashed at rest; programmatic requests
+  authenticate via `X-API-Key` and are gated per-scope (`/programmatic/*`).
+
 ### Phase 8 — Hardening & release readiness
 - DB-backed **integration test suite** (PostgreSQL): auth flow, refresh rotation
   + reuse detection, 2FA (TOTP + backup codes), RBAC enforcement, organization

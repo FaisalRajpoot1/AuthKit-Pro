@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { AccountSettingsCard } from '@/components/AccountSettingsCard';
 import { ActivityCard } from '@/components/ActivityCard';
+import { ApiKeysCard } from '@/components/ApiKeysCard';
 import { ConnectedAccountsCard } from '@/components/ConnectedAccountsCard';
 import { SessionsCard } from '@/components/SessionsCard';
 import { TwoFactorCard } from '@/components/TwoFactorCard';
@@ -49,6 +50,7 @@ export function DashboardPage(): JSX.Element {
         <AccountSettingsCard />
         <TwoFactorCard />
         <ConnectedAccountsCard />
+        <ApiKeysCard />
         <SessionsCard />
         <ActivityCard />
       </div>

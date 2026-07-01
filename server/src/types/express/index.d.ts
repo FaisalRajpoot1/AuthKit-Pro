@@ -8,11 +8,18 @@ export interface AuthenticatedUser {
   sessionId: string;
 }
 
+/** Principal attached by the API-key middleware (programmatic access). */
+export interface ApiKeyPrincipal {
+  userId: string;
+  scopes: string[];
+}
+
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: AuthenticatedUser;
+      apiAuth?: ApiKeyPrincipal;
     }
   }
 }

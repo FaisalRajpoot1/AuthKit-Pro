@@ -134,6 +134,15 @@ src/
   accounts, recent activity), the user dashboard now covers profile, password,
   2FA, sessions, and connected accounts end to end.
 
+## API Keys
+
+- Personal **API keys** for programmatic access: create (secret shown once,
+  SHA-256 hashed at rest), scopes, optional expiry, and revoke.
+- Authenticate programmatic requests with the `X-API-Key` header; endpoints are
+  gated per-scope via `requireScope`. A revoked/expired key, or a disabled user,
+  is rejected immediately.
+- Demonstrated by `/api/v1/programmatic/*` (profile, sessions).
+
 ## Getting started
 
 ```bash
@@ -213,6 +222,11 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | `POST` | `/api/v1/organizations/:id/transfer-ownership` | org OWNER | Transfer ownership |
 | `GET`  | `/api/v1/organizations/:id/teams` | org member | List teams |
 | `POST` | `/api/v1/organizations/:id/teams` | org ADMIN | Create a team |
+| `GET`  | `/api/v1/account/api-keys` | Bearer | List API keys |
+| `POST` | `/api/v1/account/api-keys` | Bearer | Create an API key (secret once) |
+| `DELETE`| `/api/v1/account/api-keys/:id` | Bearer | Revoke an API key |
+| `GET`  | `/api/v1/programmatic/profile` | API key `profile:read` | Profile (programmatic) |
+| `GET`  | `/api/v1/programmatic/sessions` | API key `sessions:read` | Sessions (programmatic) |
 | `GET`  | `/api/v1/health/live` | — | Liveness |
 | `GET`  | `/api/v1/health/ready` | — | Readiness (DB check) |
 

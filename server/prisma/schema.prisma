@@ -45,6 +45,7 @@ model User {
   ownedOrganizations      Organization[]       @relation("OwnedOrganizations")
   organizationMemberships OrganizationMember[]
   teamMemberships         TeamMember[]
+  apiKeys                 ApiKey[]
 
   @@index([deletedAt])
   @@map("users")
@@ -368,6 +369,27 @@ model TeamMember {
   @@map("team_members")
 }
 
+/// A personal API key for programmatic access. The secret is shown once at
+/// creation and only its SHA-256 hash is stored. Scopes limit what it can do.
+model ApiKey {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  name       String
+  /// Non-secret display prefix, e.g. "ak_a1b2c3".
+  prefix     String
+  keyHash    String    @unique @map("key_hash")
+  scopes     String[]
+  lastUsedAt DateTime? @map("last_used_at")
+  expiresAt  DateTime? @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_keys")
+}
+
 /// Auditable actions tracked for security and compliance.
 enum AuditAction {
   USER_REGISTERED
@@ -412,6 +434,8 @@ enum AuditAction {
   TEAM_DELETED
   TEAM_MEMBER_ADDED
   TEAM_MEMBER_REMOVED
+  API_KEY_CREATED
+  API_KEY_REVOKED
 
   @@map("audit_action")
 }

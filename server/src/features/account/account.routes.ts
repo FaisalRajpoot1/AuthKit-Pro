@@ -3,6 +3,7 @@ import { requireAuth } from '../../middleware/auth.middleware';
 import { authRateLimiter } from '../../middleware/rateLimit.middleware';
 import { validateBody } from '../../middleware/validate.middleware';
 import { asyncHandler } from '../../utils/asyncHandler';
+import { apiKeysRouter } from '../api-keys/apiKeys.routes';
 import { twoFactorRouter } from '../two-factor/twoFactor.routes';
 import * as controller from './account.controller';
 import {
@@ -21,6 +22,9 @@ accountRouter.get('/availability', authRateLimiter, asyncHandler(controller.chec
 
 // Two-factor management (the sub-router applies its own auth guard).
 accountRouter.use('/2fa', twoFactorRouter);
+
+// API-key management (the sub-router applies its own auth guard).
+accountRouter.use('/api-keys', apiKeysRouter);
 
 // Everything below requires authentication.
 accountRouter.use(requireAuth);
