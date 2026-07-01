@@ -9,7 +9,12 @@ import { passkeysAuthRouter } from '../passkeys/passkeys.routes';
 import { passwordResetRouter } from '../password-reset/passwordReset.routes';
 import { passwordlessRouter } from '../passwordless/passwordless.routes';
 import * as authController from './auth.controller';
-import { loginSchema, registerSchema, twoFactorLoginSchema } from './auth.schema';
+import {
+  loginSchema,
+  registerSchema,
+  twoFactorEmailOtpSchema,
+  twoFactorLoginSchema,
+} from './auth.schema';
 
 /**
  * Auth routes mounted at /api/v1/auth. Sensitive endpoints are rate-limited;
@@ -36,6 +41,13 @@ authRouter.post(
   authRateLimiter,
   validateBody(loginSchema),
   asyncHandler(authController.login),
+);
+
+authRouter.post(
+  '/2fa/email-otp/request',
+  authRateLimiter,
+  validateBody(twoFactorEmailOtpSchema),
+  asyncHandler(authController.twoFactorEmailOtp),
 );
 
 authRouter.post(

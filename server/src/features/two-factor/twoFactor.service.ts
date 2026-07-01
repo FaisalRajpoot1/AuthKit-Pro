@@ -1,8 +1,9 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomInt } from 'node:crypto';
 import type { Prisma, User } from '@prisma/client';
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import { env } from '../../config/env';
+import { emailService } from '../../lib/email/email.service';
 import { decrypt, encrypt } from '../../lib/encryption';
 import { logger } from '../../lib/logger';
 import { verifyPassword } from '../../lib/password';
@@ -18,6 +19,8 @@ authenticator.options = { window: 1 };
 
 const BACKUP_CODE_COUNT = 10;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const EMAIL_OTP_TTL_MS = 10 * 60 * 1000;
+const EMAIL_OTP_MAX_ATTEMPTS = 5;
 const TOTP_CODE_PATTERN = /^\d{6}$/;
 
 async function requireUser(userId: string): Promise<User> {
@@ -173,8 +176,8 @@ export async function getStatus(
 }
 
 /**
- * Verifies a second factor: a current TOTP code, or a one-time backup code
- * which is consumed on success. Returns whether verification passed.
+ * Verifies a second factor: a current TOTP code, a one-time backup code, or an
+ * emailed one-time 2FA code (all consumed on success). Returns whether it passed.
  */
 export async function verifySecondFactor(user: User, code: string): Promise<boolean> {
   const trimmed = code.trim();
@@ -185,7 +188,7 @@ export async function verifySecondFactor(user: User, code: string): Promise<bool
     }
   }
 
-  // Fall back to a one-time backup code.
+  // A one-time backup code.
   const codeHash = hashToken(normalizeCode(trimmed));
   const backup = await prisma.backupCode.findFirst({
     where: { userId: user.id, codeHash, usedAt: null },
@@ -195,7 +198,61 @@ export async function verifySecondFactor(user: User, code: string): Promise<bool
     return true;
   }
 
+  // A 6-digit emailed 2FA code (fallback when the authenticator isn't handy).
+  if (TOTP_CODE_PATTERN.test(trimmed) && (await verifyEmailOtp(user.id, trimmed))) {
+    return true;
+  }
+
   return false;
+}
+
+/** Checks (and consumes) an emailed 2FA one-time code, with an attempt cap. */
+async function verifyEmailOtp(userId: string, code: string): Promise<boolean> {
+  const token = await prisma.loginToken.findFirst({
+    where: { userId, type: 'TWO_FACTOR_OTP', consumedAt: null },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (!token || token.expiresAt.getTime() < Date.now() || token.attempts >= EMAIL_OTP_MAX_ATTEMPTS) {
+    return false;
+  }
+
+  if (hashToken(`${userId}:${code}`) !== token.tokenHash) {
+    await prisma.loginToken.update({ where: { id: token.id }, data: { attempts: { increment: 1 } } });
+    return false;
+  }
+
+  const claim = await prisma.loginToken.updateMany({
+    where: { id: token.id, consumedAt: null },
+    data: { consumedAt: new Date() },
+  });
+  return claim.count > 0;
+}
+
+/**
+ * Emails a one-time 2FA code as an alternative second factor. Called during the
+ * login challenge (the caller has already verified the first factor).
+ */
+export async function requestEmailOtp(userId: string): Promise<void> {
+  const user = await requireUser(userId);
+  if (!user.twoFactorEnabled) {
+    throw new ConflictError('Two-factor authentication is not enabled');
+  }
+
+  const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
+  await prisma.$transaction([
+    prisma.loginToken.deleteMany({ where: { userId, type: 'TWO_FACTOR_OTP' } }),
+    prisma.loginToken.create({
+      data: {
+        userId,
+        type: 'TWO_FACTOR_OTP',
+        tokenHash: hashToken(`${userId}:${code}`),
+        expiresAt: new Date(Date.now() + EMAIL_OTP_TTL_MS),
+      },
+    }),
+  ]);
+
+  await emailService.sendLoginOtpEmail(user.email, code);
+  logger.info({ userId }, 'Two-factor email OTP sent');
 }
 
 function trustedDeviceExpiry(): Date {

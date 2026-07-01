@@ -76,6 +76,11 @@ export async function completeTwoFactorLogin(input: TwoFactorLoginInput): Promis
   return data;
 }
 
+/** Request an emailed one-time code as an alternative second factor. */
+export async function requestTwoFactorEmailOtp(challengeToken: string): Promise<void> {
+  await apiClient.post('/auth/2fa/email-otp/request', { challengeToken });
+}
+
 export async function logout(): Promise<void> {
   await apiClient.post('/auth/logout');
   setAccessToken(null);

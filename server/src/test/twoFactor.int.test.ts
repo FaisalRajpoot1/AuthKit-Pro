@@ -1,7 +1,8 @@
 import { authenticator } from 'otplib';
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../app';
+import { emailService } from '../lib/email/email.service';
 import { testUser } from './helpers';
 
 const app = createApp();
@@ -93,5 +94,27 @@ describe('two-factor authentication (integration)', () => {
       .post('/api/v1/auth/2fa/login')
       .send({ challengeToken: login.body.challengeToken, code: '000000' });
     expect(bad.status).toBe(401);
+  });
+
+  it('completes login with an emailed 2FA code', async () => {
+    const login = await request(app)
+      .post('/api/v1/auth/login')
+      .send({ identifier: testUser().email, password: testUser().password });
+    expect(login.body.twoFactorRequired).toBe(true);
+
+    const spy = vi.spyOn(emailService, 'sendLoginOtpEmail').mockResolvedValue();
+    const req = await request(app)
+      .post('/api/v1/auth/2fa/email-otp/request')
+      .send({ challengeToken: login.body.challengeToken });
+    expect(req.status).toBe(202);
+    const code = spy.mock.calls[0]?.[1] as string;
+    spy.mockRestore();
+    expect(code).toMatch(/^\d{6}$/);
+
+    const completed = await request(app)
+      .post('/api/v1/auth/2fa/login')
+      .send({ challengeToken: login.body.challengeToken, code });
+    expect(completed.status).toBe(200);
+    expect(completed.body.accessToken).toBeTruthy();
   });
 });

@@ -70,6 +70,9 @@ src/
   it with a TOTP or backup code. **Trusted devices** can skip 2FA for a window.
 - Backup codes are hashed at rest and single-use; reuse of a backup code is
   impossible. All 2FA actions are audit-logged.
+- **Email OTP fallback**: during the challenge, a user can request a one-time
+  code by email (`/auth/2fa/email-otp/request`) as an alternative second factor —
+  single-use, expiring, and attempt-capped.
 
 ## Phase 4B — OAuth (Google · GitHub · Microsoft · Discord)
 

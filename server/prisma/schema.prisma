@@ -448,6 +448,7 @@ model LoginAttempt {
 enum LoginTokenType {
   MAGIC_LINK
   EMAIL_OTP
+  TWO_FACTOR_OTP
 
   @@map("login_token_type")
 }

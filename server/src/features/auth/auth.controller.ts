@@ -7,7 +7,9 @@ import {
   setTrustedDeviceCookie,
   TRUSTED_DEVICE_COOKIE_NAME,
 } from './auth.cookies';
+import { verifyTwoFactorChallenge } from '../../lib/jwt';
 import { getUserRbac } from '../rbac/rbac.service';
+import { requestEmailOtp } from '../two-factor/twoFactor.service';
 import * as authService from './auth.service';
 import type { RequestContext } from './auth.types';
 import { sendLoginResult } from './loginResponse';
@@ -29,6 +31,13 @@ export async function login(req: Request, res: Response): Promise<void> {
   const trustedDeviceToken = req.cookies?.[TRUSTED_DEVICE_COOKIE_NAME] as string | undefined;
   const result = await authService.login(req.body, getContext(req), { trustedDeviceToken });
   sendLoginResult(res, result);
+}
+
+export async function twoFactorEmailOtp(req: Request, res: Response): Promise<void> {
+  // The challenge token proves the first factor already passed.
+  const { userId } = verifyTwoFactorChallenge(req.body.challengeToken);
+  await requestEmailOtp(userId);
+  res.status(202).json({ message: 'A verification code has been sent to your email' });
 }
 
 export async function twoFactorLogin(req: Request, res: Response): Promise<void> {

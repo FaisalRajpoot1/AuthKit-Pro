@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthShell } from '@/components/AuthShell';
 import { Button, TextField } from '@/components/ui';
+import { requestTwoFactorEmailOtp } from '@/features/auth/auth.api';
 import { useAuth } from '@/features/auth/AuthContext';
 import { getApiErrorMessage } from '@/lib/apiError';
 
@@ -22,6 +23,21 @@ export function TwoFactorStep({
   const [trustDevice, setTrustDevice] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [emailNotice, setEmailNotice] = useState<string | null>(null);
+  const [emailBusy, setEmailBusy] = useState(false);
+
+  const emailMeACode = async (): Promise<void> => {
+    setError(null);
+    setEmailBusy(true);
+    try {
+      await requestTwoFactorEmailOtp(challengeToken);
+      setEmailNotice('We emailed you a 6-digit code. Enter it above.');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Could not send a code'));
+    } finally {
+      setEmailBusy(false);
+    }
+  };
 
   const onSubmit = async (event: React.FormEvent): Promise<void> => {
     event.preventDefault();
@@ -58,6 +74,7 @@ export function TwoFactorStep({
           />
           Trust this device for 30 days
         </label>
+        {emailNotice ? <p className="text-sm text-emerald-600">{emailNotice}</p> : null}
         {error ? (
           <p role="alert" className="text-sm text-red-600">
             {error}
@@ -66,6 +83,14 @@ export function TwoFactorStep({
         <Button type="submit" loading={submitting}>
           Verify
         </Button>
+        <button
+          type="button"
+          onClick={emailMeACode}
+          disabled={emailBusy}
+          className="text-center text-sm font-medium text-indigo-600 hover:underline disabled:opacity-50"
+        >
+          {emailBusy ? 'Sending…' : 'Trouble with your authenticator? Email me a code'}
+        </button>
         <button
           type="button"
           onClick={onCancel}
