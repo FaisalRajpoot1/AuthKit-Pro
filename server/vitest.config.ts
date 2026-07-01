@@ -13,5 +13,7 @@ export default defineConfig({
       ENCRYPTION_KEY: 'JB6IodCakx3kzIvrFGpV5mhh0CHabl4MPeJI7PVvV1U=',
     },
     include: ['src/**/*.{test,spec}.ts'],
+    // Integration tests need a real database and run via vitest.integration.config.ts.
+    exclude: ['**/node_modules/**', '**/*.int.test.ts'],
   },
 });

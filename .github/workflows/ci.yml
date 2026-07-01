@@ -13,26 +13,57 @@ concurrency:
 
 jobs:
   server:
-    name: Server (lint · typecheck · test · build)
+    name: Server (lint · typecheck · unit · build)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: server
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: server/package-lock.json
-
       - run: npm ci
       - run: npx prisma generate
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  integration:
+    name: Server integration (PostgreSQL)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: authkit_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/authkit_test?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run test:integration
 
   client:
     name: Client (lint · typecheck · build)
@@ -42,14 +73,32 @@ jobs:
         working-directory: client
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: client/package-lock.json
-
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
+
+  packages:
+    name: Packages (test · build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Build in dependency order (react → core, example → express).
+      - name: '@authkit/core'
+        run: cd packages/core && npm ci && npm run lint && npm test && npm run build
+      - name: '@authkit/express'
+        run: cd packages/express && npm ci && npm run lint && npm test && npm run build
+      - name: '@authkit/cli'
+        run: cd packages/cli && npm ci && npm run lint && npm test && npm run build
+      - name: '@authkit/react'
+        run: cd packages/react && npm ci && npm run lint && npm test && npm run build
+      - name: 'example: express-api'
+        run: cd examples/express-api && npm ci && npm run typecheck
