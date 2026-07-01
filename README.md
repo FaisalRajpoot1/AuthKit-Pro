@@ -78,8 +78,14 @@ See **[server/README.md](server/README.md)** and **[client/README.md](client/REA
 ## Continuous Integration
 
 GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs lint,
-typecheck, tests, and build for both workspaces on every push and pull request.
+typecheck, unit tests, a **Postgres-backed integration suite**, and builds for
+the server, client, and all `@authkit/*` packages on every push and pull request.
+
+## Contributing & Security
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — local setup, standards, and workflow.
+- **[SECURITY.md](SECURITY.md)** — security model and how to report a vulnerability.
 
 ## License
 
-TBD
+Proprietary — All Rights Reserved. See **[LICENSE](LICENSE)**.
