@@ -71,9 +71,9 @@ src/
 - Backup codes are hashed at rest and single-use; reuse of a backup code is
   impossible. All 2FA actions are audit-logged.
 
-## Phase 4B — OAuth (Google + GitHub)
+## Phase 4B — OAuth (Google · GitHub · Microsoft · Discord)
 
-- **Sign in / sign up with Google or GitHub.** Existing accounts are matched by
+- **Sign in / sign up with Google, GitHub, Microsoft, or Discord.** Existing accounts are matched by
   verified email and linked automatically; otherwise a new account is created
   (random password the user can reset later).
 - **Account linking/unlinking** for signed-in users. Unlink is refused if it

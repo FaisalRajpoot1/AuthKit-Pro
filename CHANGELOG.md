@@ -6,6 +6,8 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **More OAuth providers** (Module 4): added Microsoft and Discord sign-in
+  (alongside Google and GitHub), via the existing pluggable provider strategy.
 - **In-app notifications** (Module 18): a notifications subsystem with a
   dashboard bell (unread badge, mark read/all, delete). Security alerts are
   emitted on password change, 2FA enable/disable, and account lockout.

@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/apiClient';
 
-export type OAuthProvider = 'GOOGLE' | 'GITHUB';
+export type OAuthProvider = 'GOOGLE' | 'GITHUB' | 'MICROSOFT' | 'DISCORD';
 
 export interface LinkedAccount {
   provider: OAuthProvider;
@@ -43,4 +43,6 @@ export async function unlinkAccount(provider: OAuthProvider): Promise<void> {
 export const PROVIDER_LABELS: Record<OAuthProvider, string> = {
   GOOGLE: 'Google',
   GITHUB: 'GitHub',
+  MICROSOFT: 'Microsoft',
+  DISCORD: 'Discord',
 };

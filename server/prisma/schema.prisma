@@ -192,6 +192,8 @@ model TrustedDevice {
 enum OAuthProvider {
   GOOGLE
   GITHUB
+  MICROSOFT
+  DISCORD
 
   @@map("oauth_provider")
 }

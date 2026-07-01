@@ -1,19 +1,23 @@
-import type { OAuthProvider } from '@prisma/client';
+import { OAuthProvider } from '@prisma/client';
 import { NotFoundError } from '../../../utils/errors';
 import type { OAuthProviderClient } from '../oauth.types';
+import { discordProvider } from './discord.provider';
 import { githubProvider } from './github.provider';
 import { googleProvider } from './google.provider';
+import { microsoftProvider } from './microsoft.provider';
 
 const PROVIDERS: Record<OAuthProvider, OAuthProviderClient> = {
   GOOGLE: googleProvider,
   GITHUB: githubProvider,
+  MICROSOFT: microsoftProvider,
+  DISCORD: discordProvider,
 };
 
 /** Parses a URL slug into a known provider enum, or throws 404. */
 export function parseProvider(slug: string): OAuthProvider {
   const upper = slug.toUpperCase();
-  if (upper === 'GOOGLE' || upper === 'GITHUB') {
-    return upper;
+  if (upper in OAuthProvider) {
+    return upper as OAuthProvider;
   }
   throw new NotFoundError(`Unknown OAuth provider: ${slug}`);
 }

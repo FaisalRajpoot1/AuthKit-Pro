@@ -6,7 +6,7 @@ import {
 } from '@/features/oauth/oauth.api';
 import { getApiErrorMessage } from '@/lib/apiError';
 
-const PROVIDERS: OAuthProvider[] = ['GOOGLE', 'GITHUB'];
+const PROVIDERS: OAuthProvider[] = ['GOOGLE', 'GITHUB', 'MICROSOFT', 'DISCORD'];
 
 /**
  * Social sign-in buttons. A provider that isn't configured server-side simply
