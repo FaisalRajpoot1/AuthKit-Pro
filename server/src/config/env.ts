@@ -46,6 +46,12 @@ const envSchema = z.object({
   // Public URL of the frontend — used to build links in emails.
   APP_URL: z.string().url().default('http://localhost:5173'),
 
+  // Serve interactive API docs (Swagger UI) at /api/v1/docs.
+  API_DOCS_ENABLED: z
+    .string()
+    .default('true')
+    .transform((value) => value !== 'false'),
+
   // Single-use token lifetimes.
   EMAIL_VERIFICATION_TTL_HOURS: z.coerce.number().int().positive().default(24),
   PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(30),

@@ -241,3 +241,12 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 
 The access token is returned in the JSON body; the refresh token is set as an
 httpOnly, SameSite cookie scoped to `/api/v1/auth`.
+
+## Interactive API docs (OpenAPI / Swagger)
+
+- **Swagger UI** → `GET /api/v1/docs`
+- **Raw OpenAPI spec** → `GET /api/v1/openapi.json`
+
+Documents the core auth, account, session, 2FA, passwordless, API-key, and admin
+endpoints with request/response schemas and security schemes (Bearer token, API
+key, refresh cookie). Toggle with `API_DOCS_ENABLED`.

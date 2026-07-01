@@ -3,7 +3,9 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
+import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
+import { openApiDocument } from './docs/openapi';
 import { logger } from './lib/logger';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { apiRateLimiter } from './middleware/rateLimit.middleware';
@@ -21,6 +23,23 @@ export function createApp(): Express {
   // We sit behind a reverse proxy (Nginx/Render); trust it for correct req.ip
   // and secure-cookie handling.
   app.set('trust proxy', 1);
+
+  // Interactive API docs (mounted before the strict CSP, which would otherwise
+  // block Swagger UI's inline assets). Raw spec is also exposed as JSON.
+  if (env.API_DOCS_ENABLED) {
+    app.get(`${API_PREFIX}/openapi.json`, (_req, res) => {
+      res.json(openApiDocument);
+    });
+    app.use(
+      `${API_PREFIX}/docs`,
+      helmet({ contentSecurityPolicy: false }),
+      swaggerUi.serve,
+      swaggerUi.setup(openApiDocument as Parameters<typeof swaggerUi.setup>[0], {
+        customSiteTitle: 'AuthKit Pro API',
+        customCss: '.swagger-ui .topbar { display: none }',
+      }),
+    );
+  }
 
   // Security headers.
   app.use(helmet());

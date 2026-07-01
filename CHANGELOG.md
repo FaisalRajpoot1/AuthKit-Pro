@@ -6,6 +6,9 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **Interactive API docs** (Module 24): OpenAPI 3 spec served as Swagger UI at
+  `/api/v1/docs` and raw JSON at `/api/v1/openapi.json` (Bearer / API-key /
+  cookie security schemes).
 - **Passwordless login** (Modules 11–12): magic-link and email-OTP sign-in.
   Single-use, short-lived, hashed tokens; enumeration-safe; 2FA-aware.
 - **API keys** (Module 19): personal keys with scopes, optional expiry, and

@@ -9,7 +9,9 @@ Production-ready authentication & authorization for MERN + PostgreSQL.
 - **[Architecture](architecture.md)** — how the system fits together, auth flows
 - **[Packages](packages.md)** — the reusable `@authkit/*` npm packages
 - **[Deployment](deployment.md)** — Docker, environment, production notes
-- **API reference** — see the endpoint table in [server/README.md](../server/README.md)
+- **API reference** — interactive **Swagger UI** at `/api/v1/docs` (raw spec at
+  `/api/v1/openapi.json`), plus the endpoint table in
+  [server/README.md](../server/README.md)
 
 ## Repository layout
 
