@@ -6,6 +6,10 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **CAPTCHA support** (Module 14): pluggable, provider-agnostic bot protection
+  (Cloudflare Turnstile / hCaptcha / reCAPTCHA) on register, login, forgot, and
+  passwordless-request. Off by default; no-op when disabled; fails open on
+  provider outage. Token via `X-Captcha-Token`.
 - **Breached-password check** (Module 14): passwords are checked against Have I
   Been Pwned (k-anonymity — only a 5-char SHA-1 prefix is sent) on register,
   password reset, and password change; breached passwords are rejected. Fails

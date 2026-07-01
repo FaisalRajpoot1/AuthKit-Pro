@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { verifyCaptcha } from '../../middleware/captcha.middleware';
 import { authRateLimiter } from '../../middleware/rateLimit.middleware';
 import { validateBody } from '../../middleware/validate.middleware';
 import { asyncHandler } from '../../utils/asyncHandler';
@@ -11,6 +12,7 @@ export const passwordResetRouter = Router();
 passwordResetRouter.post(
   '/forgot',
   authRateLimiter,
+  verifyCaptcha,
   validateBody(forgotPasswordSchema),
   asyncHandler(controller.forgotPassword),
 );

@@ -58,6 +58,14 @@ const envSchema = z.object({
     .default('true')
     .transform((value) => value !== 'false'),
 
+  // CAPTCHA on sensitive endpoints (register/login/forgot/passwordless).
+  CAPTCHA_ENABLED: z
+    .string()
+    .default('false')
+    .transform((value) => value === 'true'),
+  CAPTCHA_PROVIDER: z.enum(['turnstile', 'hcaptcha', 'recaptcha']).default('turnstile'),
+  CAPTCHA_SECRET: z.string().optional(),
+
   // Single-use token lifetimes.
   EMAIL_VERIFICATION_TTL_HOURS: z.coerce.number().int().positive().default(24),
   PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(30),

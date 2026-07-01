@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middleware/auth.middleware';
+import { verifyCaptcha } from '../../middleware/captcha.middleware';
 import { authRateLimiter } from '../../middleware/rateLimit.middleware';
 import { validateBody } from '../../middleware/validate.middleware';
 import { asyncHandler } from '../../utils/asyncHandler';
@@ -32,6 +33,7 @@ authRouter.use('/passkeys', passkeysAuthRouter);
 authRouter.post(
   '/register',
   authRateLimiter,
+  verifyCaptcha,
   validateBody(registerSchema),
   asyncHandler(authController.register),
 );
@@ -39,6 +41,7 @@ authRouter.post(
 authRouter.post(
   '/login',
   authRateLimiter,
+  verifyCaptcha,
   validateBody(loginSchema),
   asyncHandler(authController.login),
 );

@@ -34,6 +34,10 @@ src/
   window after repeated failures (admins can unlock)
 - **Breached-password check** (Have I Been Pwned, k-anonymity) on register,
   reset, and change — rejects passwords found in known breaches
+- **CAPTCHA** (optional, off by default): pluggable bot protection on
+  register/login/forgot/passwordless via Cloudflare Turnstile, hCaptcha, or
+  reCAPTCHA. When enabled, clients send the token as `X-Captcha-Token`; fails
+  open on provider outages
 
 ## Phase 2 — implemented
 

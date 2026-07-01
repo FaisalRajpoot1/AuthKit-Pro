@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { verifyCaptcha } from '../../middleware/captcha.middleware';
 import { authRateLimiter } from '../../middleware/rateLimit.middleware';
 import { validateBody } from '../../middleware/validate.middleware';
 import { asyncHandler } from '../../utils/asyncHandler';
@@ -11,6 +12,7 @@ export const passwordlessRouter = Router();
 passwordlessRouter.post(
   '/magic-link/request',
   authRateLimiter,
+  verifyCaptcha,
   validateBody(passwordlessRequestSchema),
   asyncHandler(controller.requestMagicLink),
 );
@@ -23,6 +25,7 @@ passwordlessRouter.post(
 passwordlessRouter.post(
   '/otp/request',
   authRateLimiter,
+  verifyCaptcha,
   validateBody(passwordlessRequestSchema),
   asyncHandler(controller.requestOtp),
 );
