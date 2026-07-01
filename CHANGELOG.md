@@ -12,6 +12,8 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 - CI: added a Postgres-service integration job and a job that builds/tests all
   `@authkit/*` packages and the example.
 - JWT algorithm pinning and other security hardening; added `SECURITY.md`.
+- Production startup guard: refuses to boot with weak/default secrets, identical
+  JWT secrets, or `COOKIE_SECURE=false` when `NODE_ENV=production`.
 
 ### Phase 7 — SDK, packages, CLI, docs
 - `@authkit/core` — framework-agnostic client SDK with refresh-on-401.

@@ -1,5 +1,6 @@
 import { config as loadDotenv } from 'dotenv';
 import { z } from 'zod';
+import { productionSafetyIssues } from './productionSafety';
 
 loadDotenv();
 
@@ -88,3 +89,23 @@ export type Env = typeof env;
 
 export const isProduction = env.NODE_ENV === 'production';
 export const isTest = env.NODE_ENV === 'test';
+
+// Fail fast in production on weak/default secrets or insecure cookie settings.
+if (isProduction) {
+  const issues = productionSafetyIssues({
+    jwtAccessSecret: env.JWT_ACCESS_SECRET,
+    jwtRefreshSecret: env.JWT_REFRESH_SECRET,
+    encryptionKey: env.ENCRYPTION_KEY,
+    cookieSecure: env.COOKIE_SECURE,
+  });
+
+  if (issues.length > 0) {
+    // eslint-disable-next-line no-console
+    console.error('❌ Refusing to start in production — insecure configuration:');
+    for (const issue of issues) {
+      // eslint-disable-next-line no-console
+      console.error(`  • ${issue}`);
+    }
+    process.exit(1);
+  }
+}

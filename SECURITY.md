@@ -66,6 +66,8 @@ reports promptly and coordinate a fix and disclosure.
   internal details or stack traces in production.
 - Secrets are provided via environment variables and validated at startup; logs
   redact `Authorization`, cookies, and password fields.
+- A **production startup guard** refuses to boot when `NODE_ENV=production` if it
+  detects placeholder/dev secrets, identical JWT secrets, or `COOKIE_SECURE=false`.
 - An append-only **audit log** records every significant action.
 
 ## Deploying securely
