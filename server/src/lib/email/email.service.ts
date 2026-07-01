@@ -3,6 +3,8 @@ import { logger } from '../logger';
 import type { EmailTransport } from './email.types';
 import {
   emailChangeTemplate,
+  loginOtpTemplate,
+  magicLinkTemplate,
   organizationInviteTemplate,
   passwordResetTemplate,
   verifyEmailTemplate,
@@ -49,5 +51,13 @@ export const emailService = {
     await transport.send(
       organizationInviteTemplate(to, organizationName, link('/invites/accept', token)),
     );
+  },
+
+  async sendMagicLinkEmail(to: string, token: string): Promise<void> {
+    await transport.send(magicLinkTemplate(to, link('/auth/magic', token)));
+  },
+
+  async sendLoginOtpEmail(to: string, code: string): Promise<void> {
+    await transport.send(loginOtpTemplate(to, code));
   },
 };

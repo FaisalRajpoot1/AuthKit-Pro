@@ -143,6 +143,15 @@ src/
   is rejected immediately.
 - Demonstrated by `/api/v1/programmatic/*` (profile, sessions).
 
+## Passwordless login
+
+- **Magic link** and **email OTP** sign-in — no password required. Tokens are
+  single-use, short-lived, hashed at rest (OTP hashes salted with the user id;
+  a per-code attempt cap prevents guessing).
+- Enumeration-safe requests (always the same response) and **2FA-aware**: if the
+  account has 2FA enabled, verification returns a challenge instead of a session
+  (shared `finalizeLogin` with password login).
+
 ## Getting started
 
 ```bash

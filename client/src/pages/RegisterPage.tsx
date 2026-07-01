@@ -7,7 +7,7 @@ import { OAuthButtons } from '@/components/OAuthButtons';
 import { useAuth } from '@/features/auth/AuthContext';
 import { registerFormSchema, type RegisterFormValues } from '@/features/auth/auth.types';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { AuthShell } from './LoginPage';
+import { AuthShell } from '@/components/AuthShell';
 
 export function RegisterPage(): JSX.Element {
   const { register: registerUser } = useAuth();

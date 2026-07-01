@@ -6,6 +6,8 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **Passwordless login** (Modules 11–12): magic-link and email-OTP sign-in.
+  Single-use, short-lived, hashed tokens; enumeration-safe; 2FA-aware.
 - **API keys** (Module 19): personal keys with scopes, optional expiry, and
   revoke. The secret is shown once and hashed at rest; programmatic requests
   authenticate via `X-API-Key` and are gated per-scope (`/programmatic/*`).

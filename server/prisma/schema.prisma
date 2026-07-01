@@ -46,6 +46,7 @@ model User {
   organizationMemberships OrganizationMember[]
   teamMemberships         TeamMember[]
   apiKeys                 ApiKey[]
+  loginTokens             LoginToken[]
 
   @@index([deletedAt])
   @@map("users")
@@ -369,6 +370,36 @@ model TeamMember {
   @@map("team_members")
 }
 
+/// Passwordless login mechanism.
+enum LoginTokenType {
+  MAGIC_LINK
+  EMAIL_OTP
+
+  @@map("login_token_type")
+}
+
+/// Single-use, short-lived token for passwordless login (magic link or email
+/// OTP). Hashed at rest; OTP hashes are salted with the user id so low-entropy
+/// codes remain unique per user. `attempts` caps OTP guessing.
+model LoginToken {
+  id         String         @id @default(uuid()) @db.Uuid
+  userId     String         @map("user_id") @db.Uuid
+  type       LoginTokenType
+  tokenHash  String         @unique @map("token_hash")
+  attempts   Int            @default(0)
+  expiresAt  DateTime       @map("expires_at")
+  consumedAt DateTime?      @map("consumed_at")
+  ipAddress  String?        @map("ip_address")
+  userAgent  String?        @map("user_agent")
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("login_tokens")
+}
+
 /// A personal API key for programmatic access. The secret is shown once at
 /// creation and only its SHA-256 hash is stored. Scopes limit what it can do.
 model ApiKey {
@@ -436,6 +467,7 @@ enum AuditAction {
   TEAM_MEMBER_REMOVED
   API_KEY_CREATED
   API_KEY_REVOKED
+  PASSWORDLESS_LOGIN_REQUESTED
 
   @@map("audit_action")
 }

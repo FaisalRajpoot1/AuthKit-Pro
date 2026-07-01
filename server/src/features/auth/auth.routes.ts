@@ -6,6 +6,7 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { emailVerificationRouter } from '../email-verification/emailVerification.routes';
 import { oauthRouter } from '../oauth/oauth.routes';
 import { passwordResetRouter } from '../password-reset/passwordReset.routes';
+import { passwordlessRouter } from '../passwordless/passwordless.routes';
 import * as authController from './auth.controller';
 import { loginSchema, registerSchema, twoFactorLoginSchema } from './auth.schema';
 
@@ -19,6 +20,7 @@ export const authRouter = Router();
 authRouter.use('/email', emailVerificationRouter);
 authRouter.use('/password', passwordResetRouter);
 authRouter.use('/oauth', oauthRouter);
+authRouter.use('/passwordless', passwordlessRouter);
 
 authRouter.post(
   '/register',

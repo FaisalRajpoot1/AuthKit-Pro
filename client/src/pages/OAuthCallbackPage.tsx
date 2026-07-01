@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
-import { AuthShell } from './LoginPage';
+import { AuthShell } from '@/components/AuthShell';
 
 /**
  * Landing page after the OAuth provider redirect. The backend has already set

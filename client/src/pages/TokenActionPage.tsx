@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { AuthShell } from './LoginPage';
+import { AuthShell } from '@/components/AuthShell';
 
 type Status = 'pending' | 'success' | 'error';
 

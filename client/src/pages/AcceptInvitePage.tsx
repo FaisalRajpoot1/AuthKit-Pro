@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
 import { acceptInvite } from '@/features/organizations/organizations.api';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { AuthShell } from './LoginPage';
+import { AuthShell } from '@/components/AuthShell';
 
 type Status = 'pending' | 'success' | 'error';
 

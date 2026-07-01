@@ -7,7 +7,9 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { OrganizationsPage } from '@/pages/OrganizationsPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { LoginPage } from '@/pages/LoginPage';
+import { MagicLinkPage } from '@/pages/MagicLinkPage';
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage';
+import { PasswordlessPage } from '@/pages/PasswordlessPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { TokenActionPage } from '@/pages/TokenActionPage';
@@ -19,6 +21,8 @@ export function App(): JSX.Element {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/passwordless" element={<PasswordlessPage />} />
+      <Route path="/auth/magic" element={<MagicLinkPage />} />
       <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
       <Route path="/invites/accept" element={<AcceptInvitePage />} />
       <Route

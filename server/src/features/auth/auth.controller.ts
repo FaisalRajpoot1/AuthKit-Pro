@@ -10,6 +10,7 @@ import {
 import { getUserRbac } from '../rbac/rbac.service';
 import * as authService from './auth.service';
 import type { RequestContext } from './auth.types';
+import { sendLoginResult } from './loginResponse';
 
 function getContext(req: Request): RequestContext {
   return {
@@ -27,14 +28,7 @@ export async function register(req: Request, res: Response): Promise<void> {
 export async function login(req: Request, res: Response): Promise<void> {
   const trustedDeviceToken = req.cookies?.[TRUSTED_DEVICE_COOKIE_NAME] as string | undefined;
   const result = await authService.login(req.body, getContext(req), { trustedDeviceToken });
-
-  if (result.status === 'two_factor_required') {
-    res.status(200).json({ twoFactorRequired: true, challengeToken: result.challengeToken });
-    return;
-  }
-
-  setRefreshCookie(res, result.tokens.refreshToken, result.tokens.refreshTokenExpiresAt);
-  res.status(200).json({ user: result.user, accessToken: result.tokens.accessToken });
+  sendLoginResult(res, result);
 }
 
 export async function twoFactorLogin(req: Request, res: Response): Promise<void> {

@@ -149,9 +149,21 @@ export async function login(
     throw new UnauthorizedError('This account has been disabled');
   }
 
-  // Second factor required unless this device is already trusted.
+  return finalizeLogin(user, context, options.trustedDeviceToken);
+}
+
+/**
+ * Shared final step of any successful first factor (password or passwordless):
+ * enforces 2FA when enabled (unless the device is trusted), otherwise issues a
+ * session. Reused by password login and passwordless login.
+ */
+export async function finalizeLogin(
+  user: User,
+  context: RequestContext,
+  trustedDeviceToken?: string | undefined,
+): Promise<LoginResult> {
   if (user.twoFactorEnabled) {
-    const trusted = await isTrustedDevice(user.id, options.trustedDeviceToken);
+    const trusted = await isTrustedDevice(user.id, trustedDeviceToken);
     if (!trusted) {
       return { status: 'two_factor_required', challengeToken: signTwoFactorChallenge(user.id) };
     }

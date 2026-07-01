@@ -24,16 +24,44 @@ interface LoginApiResponse extends Partial<AuthResponse> {
   challengeToken?: string;
 }
 
-export async function login(values: LoginFormValues): Promise<LoginResult> {
-  const { data } = await apiClient.post<LoginApiResponse>('/auth/login', values);
-
+/** Maps a login-style API response to a LoginResult, storing the token if any. */
+function interpretLogin(data: LoginApiResponse): LoginResult {
   if (data.twoFactorRequired && data.challengeToken) {
     return { kind: 'two_factor_required', challengeToken: data.challengeToken };
   }
-
   const response = data as AuthResponse;
   setAccessToken(response.accessToken);
   return { kind: 'authenticated', response };
+}
+
+export async function login(values: LoginFormValues): Promise<LoginResult> {
+  const { data } = await apiClient.post<LoginApiResponse>('/auth/login', values);
+  return interpretLogin(data);
+}
+
+// ── Passwordless ─────────────────────────────────────────────────────────────
+
+export async function requestMagicLink(email: string): Promise<void> {
+  await apiClient.post('/auth/passwordless/magic-link/request', { email });
+}
+
+export async function verifyMagicLink(token: string): Promise<LoginResult> {
+  const { data } = await apiClient.post<LoginApiResponse>('/auth/passwordless/magic-link/verify', {
+    token,
+  });
+  return interpretLogin(data);
+}
+
+export async function requestLoginOtp(email: string): Promise<void> {
+  await apiClient.post('/auth/passwordless/otp/request', { email });
+}
+
+export async function verifyLoginOtp(email: string, code: string): Promise<LoginResult> {
+  const { data } = await apiClient.post<LoginApiResponse>('/auth/passwordless/otp/verify', {
+    email,
+    code,
+  });
+  return interpretLogin(data);
 }
 
 export interface TwoFactorLoginInput {

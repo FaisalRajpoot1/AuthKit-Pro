@@ -9,7 +9,7 @@ import {
   type ForgotPasswordFormValues,
 } from '@/features/auth/auth.types';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { AuthShell } from './LoginPage';
+import { AuthShell } from '@/components/AuthShell';
 
 export function ForgotPasswordPage(): JSX.Element {
   const [submitted, setSubmitted] = useState(false);

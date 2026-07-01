@@ -70,6 +70,34 @@ export function organizationInviteTemplate(
   };
 }
 
+export function magicLinkTemplate(to: string, url: string): EmailMessage {
+  return {
+    to,
+    subject: 'Your sign-in link',
+    html: layout(
+      'Sign in to AuthKit Pro',
+      `<p>Click the button below to sign in. This link expires shortly and can be used once.</p>
+       <p style="margin:24px 0;">${button(url, 'Sign in')}</p>
+       <p style="font-size:13px; color:#64748b;">Or paste this link into your browser:<br>${url}</p>`,
+    ),
+    text: `Sign in to AuthKit Pro:\n\n${url}\n\nIf you didn't request this, ignore this email.`,
+  };
+}
+
+export function loginOtpTemplate(to: string, code: string): EmailMessage {
+  return {
+    to,
+    subject: 'Your sign-in code',
+    html: layout(
+      'Your sign-in code',
+      `<p>Use this code to sign in. It expires shortly.</p>
+       <p style="margin:24px 0; font-size:28px; font-weight:700; letter-spacing:6px;">${code}</p>
+       <p style="font-size:13px; color:#64748b;">If you didn't request this, ignore this email.</p>`,
+    ),
+    text: `Your AuthKit Pro sign-in code is: ${code}\n\nIt expires shortly.`,
+  };
+}
+
 export function emailChangeTemplate(to: string, url: string): EmailMessage {
   return {
     to,
