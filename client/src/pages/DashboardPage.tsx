@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AccountSettingsCard } from '@/components/AccountSettingsCard';
 import { ActivityCard } from '@/components/ActivityCard';
 import { ApiKeysCard } from '@/components/ApiKeysCard';
+import { NotificationsBell } from '@/components/NotificationsBell';
 import { ConnectedAccountsCard } from '@/components/ConnectedAccountsCard';
 import { PasskeysCard } from '@/components/PasskeysCard';
 import { SessionsCard } from '@/components/SessionsCard';
@@ -23,6 +24,7 @@ export function DashboardPage(): JSX.Element {
       <header className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
         <div className="flex items-center gap-4">
+          <NotificationsBell />
           <Link to="/organizations" className="text-sm font-semibold text-indigo-600 hover:underline">
             Organizations
           </Link>

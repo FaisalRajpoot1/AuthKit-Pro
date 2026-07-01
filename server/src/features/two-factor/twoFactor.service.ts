@@ -11,6 +11,7 @@ import { generateOpaqueToken, hashToken } from '../../lib/tokens';
 import { ConflictError, NotFoundError, UnauthorizedError, ValidationError } from '../../utils/errors';
 import { recordAudit } from '../audit/audit.service';
 import type { RequestContext } from '../auth/auth.types';
+import { notify } from '../notifications/notifications.service';
 
 // Allow ±1 time-step (±30s) of clock drift between server and authenticator.
 authenticator.options = { window: 1 };
@@ -103,6 +104,11 @@ export async function enableTwoFactor(
 
   logger.info({ userId }, 'Two-factor enabled');
   await recordAudit({ action: 'TWO_FACTOR_ENABLED', userId, context });
+  await notify(userId, {
+    type: 'SECURITY_ALERT',
+    title: 'Two-factor authentication enabled',
+    body: 'Two-factor authentication was turned on for your account.',
+  });
   return { backupCodes };
 }
 
@@ -131,6 +137,11 @@ export async function disableTwoFactor(
 
   logger.info({ userId }, 'Two-factor disabled');
   await recordAudit({ action: 'TWO_FACTOR_DISABLED', userId, context });
+  await notify(userId, {
+    type: 'SECURITY_ALERT',
+    title: 'Two-factor authentication disabled',
+    body: 'Two-factor authentication was turned off for your account. If this wasn’t you, secure your account now.',
+  });
 }
 
 export async function regenerateBackupCodes(

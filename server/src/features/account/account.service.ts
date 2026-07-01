@@ -7,6 +7,7 @@ import { recordAudit } from '../audit/audit.service';
 import type { RequestContext } from '../auth/auth.types';
 import { toUserDto, type UserDto } from '../auth/auth.types';
 import { issueEmailChange } from '../email-verification/emailVerification.service';
+import { notify } from '../notifications/notifications.service';
 import { revokeAllUserSessions } from '../sessions/sessions.service';
 import type {
   AvailabilityQuery,
@@ -67,6 +68,11 @@ export async function changePassword(
 
   logger.info({ userId }, 'Password changed');
   await recordAudit({ action: 'PASSWORD_CHANGED', userId, context });
+  await notify(userId, {
+    type: 'SECURITY_ALERT',
+    title: 'Password changed',
+    body: 'Your password was changed and other sessions were signed out. If this wasn’t you, reset your password immediately.',
+  });
 }
 
 /**

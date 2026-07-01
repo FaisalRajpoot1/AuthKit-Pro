@@ -2,6 +2,7 @@ import type { User } from '@prisma/client';
 import { logger } from '../../lib/logger';
 import { prisma } from '../../lib/prisma';
 import { recordAudit } from '../audit/audit.service';
+import { notify } from '../notifications/notifications.service';
 import type { RequestContext } from './auth.types';
 
 /** Lock the account after this many consecutive failed password attempts. */
@@ -54,6 +55,11 @@ export async function registerFailedAttempt(user: User, context: RequestContext)
   if (shouldLock) {
     logger.warn({ userId: user.id }, 'Account locked after repeated failed logins');
     await recordAudit({ action: 'ACCOUNT_LOCKED', userId: user.id, context });
+    await notify(user.id, {
+      type: 'SECURITY_ALERT',
+      title: 'Account temporarily locked',
+      body: 'Your account was locked after several failed sign-in attempts. If this wasn’t you, reset your password.',
+    });
   }
 }
 

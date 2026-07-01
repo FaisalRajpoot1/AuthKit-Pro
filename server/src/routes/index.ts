@@ -5,6 +5,7 @@ import { programmaticRouter } from '../features/api-keys/programmatic.routes';
 import { auditRouter } from '../features/audit/audit.routes';
 import { authRouter } from '../features/auth/auth.routes';
 import { healthRouter } from '../features/health/health.routes';
+import { notificationsRouter } from '../features/notifications/notifications.routes';
 import { organizationsRouter } from '../features/organizations/organizations.routes';
 import { sessionsRouter } from '../features/sessions/sessions.routes';
 
@@ -18,4 +19,5 @@ apiRouter.use('/sessions', sessionsRouter);
 apiRouter.use('/audit-logs', auditRouter);
 apiRouter.use('/admin', adminRouter);
 apiRouter.use('/organizations', organizationsRouter);
+apiRouter.use('/notifications', notificationsRouter);
 apiRouter.use('/programmatic', programmaticRouter);

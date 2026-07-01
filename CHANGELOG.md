@@ -6,6 +6,9 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **In-app notifications** (Module 18): a notifications subsystem with a
+  dashboard bell (unread badge, mark read/all, delete). Security alerts are
+  emitted on password change, 2FA enable/disable, and account lockout.
 - **Passkeys / WebAuthn** (Module 12): register passkeys and sign in with them
   (phishing-resistant, no password). Public keys stored, counters tracked,
   challenge bound to a signed cookie; passkey login completes without a separate

@@ -136,6 +136,12 @@ src/
   accounts, recent activity), the user dashboard now covers profile, password,
   2FA, sessions, and connected accounts end to end.
 
+## Notifications
+
+- In-app **notifications** with unread counts: list, mark read / mark all read,
+  delete. **Security alerts** are raised automatically on password change, 2FA
+  enable/disable, and account lockout.
+
 ## API Keys
 
 - Personal **API keys** for programmatic access: create (secret shown once,
