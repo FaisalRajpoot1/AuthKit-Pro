@@ -60,6 +60,7 @@ export interface AdminUser {
   username: string;
   displayName: string | null;
   isActive: boolean;
+  locked: boolean;
   emailVerified: boolean;
   twoFactorEnabled: boolean;
   roles: string[];
@@ -104,6 +105,10 @@ export async function listUsers(
 
 export async function setUserActive(id: string, isActive: boolean): Promise<void> {
   await apiClient.patch(`/admin/users/${id}/status`, { isActive });
+}
+
+export async function unlockUser(id: string): Promise<void> {
+  await apiClient.post(`/admin/users/${id}/unlock`);
 }
 
 export async function listAdminAuditLogs(

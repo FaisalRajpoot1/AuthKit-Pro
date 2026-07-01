@@ -6,6 +6,9 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **Brute-force protection** (Module 14): failed-login tracking + temporary
+  account lockout after repeated failures, with an admin unlock action and a
+  login-attempts record.
 - **Interactive API docs** (Module 24): OpenAPI 3 spec served as Swagger UI at
   `/api/v1/docs` and raw JSON at `/api/v1/openapi.json` (Bearer / API-key /
   cookie security schemes).

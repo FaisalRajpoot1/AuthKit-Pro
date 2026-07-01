@@ -46,11 +46,16 @@ export interface AdminUserListItem {
   username: string;
   displayName: string | null;
   isActive: boolean;
+  locked: boolean;
   emailVerified: boolean;
   twoFactorEnabled: boolean;
   roles: string[];
   createdAt: string;
   lastLoginAt: string | null;
+}
+
+function isUserLocked(lockedUntil: Date | null): boolean {
+  return lockedUntil !== null && lockedUntil.getTime() > Date.now();
 }
 
 function clampLimit(limit?: number): number {
@@ -96,6 +101,7 @@ export async function listUsers(options: {
       username: u.username,
       displayName: u.displayName,
       isActive: u.isActive,
+      locked: isUserLocked(u.lockedUntil),
       emailVerified: u.emailVerified,
       twoFactorEnabled: u.twoFactorEnabled,
       roles: u.roles.map((r) => r.role.name),
@@ -129,6 +135,7 @@ export async function getUserDetail(userId: string): Promise<AdminUserDetail> {
     username: user.username,
     displayName: user.displayName,
     isActive: user.isActive,
+    locked: isUserLocked(user.lockedUntil),
     emailVerified: user.emailVerified,
     twoFactorEnabled: user.twoFactorEnabled,
     roles: user.roles.map((r) => r.role.name),

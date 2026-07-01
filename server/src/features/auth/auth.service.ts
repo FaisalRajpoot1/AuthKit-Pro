@@ -4,7 +4,7 @@ import { logger } from '../../lib/logger';
 import { hashPassword, verifyPassword } from '../../lib/password';
 import { prisma } from '../../lib/prisma';
 import { generateRefreshToken, hashToken } from '../../lib/tokens';
-import { ConflictError, UnauthorizedError } from '../../utils/errors';
+import { ConflictError, TooManyRequestsError, UnauthorizedError } from '../../utils/errors';
 import { recordAudit } from '../audit/audit.service';
 import { issueEmailVerification } from '../email-verification/emailVerification.service';
 import {
@@ -19,6 +19,12 @@ import {
   registerTrustedDevice,
   verifySecondFactor,
 } from '../two-factor/twoFactor.service';
+import {
+  clearFailedAttempts,
+  isLocked,
+  recordLoginAttempt,
+  registerFailedAttempt,
+} from './lockout';
 import type { LoginInput, RegisterInput, TwoFactorLoginInput } from './auth.schema';
 import {
   type AuthResult,
@@ -129,6 +135,14 @@ export async function login(
     },
   });
 
+  // Reject early if the account is temporarily locked from failed attempts.
+  if (user && isLocked(user)) {
+    await recordLoginAttempt({ email: identifier, userId: user.id, successful: false, context });
+    throw new TooManyRequestsError(
+      'Account temporarily locked due to too many failed attempts. Try again later.',
+    );
+  }
+
   // Always run a hash verification to keep timing uniform whether or not the
   // user exists, mitigating account-enumeration via response timing.
   const passwordValid = user
@@ -136,6 +150,8 @@ export async function login(
     : await verifyPassword(await dummyHashPromise, input.password);
 
   if (!user || !passwordValid) {
+    if (user) await registerFailedAttempt(user, context);
+    await recordLoginAttempt({ email: identifier, userId: user?.id ?? null, successful: false, context });
     await recordAudit({
       action: 'LOGIN_FAILED',
       userId: user?.id ?? null,
@@ -149,6 +165,8 @@ export async function login(
     throw new UnauthorizedError('This account has been disabled');
   }
 
+  await clearFailedAttempts(user);
+  await recordLoginAttempt({ email: user.email, userId: user.id, successful: true, context });
   return finalizeLogin(user, context, options.trustedDeviceToken);
 }
 

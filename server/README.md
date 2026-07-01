@@ -30,6 +30,8 @@ src/
 - Argon2id password hashing, timing-safe login, account-enumeration resistance
 - Zod request validation, Helmet, CORS (credentialed), per-route rate limiting
 - Centralized error handling with stable error codes
+- **Brute-force protection**: failed logins are tracked; an account locks for a
+  window after repeated failures (admins can unlock)
 
 ## Phase 2 — implemented
 

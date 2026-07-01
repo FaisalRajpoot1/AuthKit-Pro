@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { TextField } from '@/components/ui';
-import { listUsers, setUserActive } from '@/features/admin/admin.api';
+import { listUsers, setUserActive, unlockUser } from '@/features/admin/admin.api';
 import { formatDateTime } from '@/lib/format';
 
 export function UsersTab({ canManage }: { canManage: boolean }): JSX.Element {
@@ -15,10 +15,14 @@ export function UsersTab({ canManage }: { canManage: boolean }): JSX.Element {
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
 
+  const invalidate = (): Promise<void> =>
+    queryClient.invalidateQueries({ queryKey: ['admin-users'] }).then(() => undefined);
+
   const toggle = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => setUserActive(id, isActive),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
+    onSuccess: invalidate,
   });
+  const unlock = useMutation({ mutationFn: unlockUser, onSuccess: invalidate });
 
   const users = query.data?.pages.flatMap((p) => p.items) ?? [];
 
@@ -52,21 +56,40 @@ export function UsersTab({ canManage }: { canManage: boolean }): JSX.Element {
                 </td>
                 <td className="px-4 py-3 text-xs text-slate-600">{user.roles.join(', ') || '—'}</td>
                 <td className="px-4 py-3">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${user.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                    {user.isActive ? 'active' : 'disabled'}
-                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${user.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                      {user.isActive ? 'active' : 'disabled'}
+                    </span>
+                    {user.locked ? (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                        locked
+                      </span>
+                    ) : null}
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-xs text-slate-500">{formatDateTime(user.createdAt)}</td>
                 {canManage ? (
                   <td className="px-4 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => toggle.mutate({ id: user.id, isActive: !user.isActive })}
-                      disabled={toggle.isPending}
-                      className={`text-xs font-medium hover:underline disabled:opacity-50 ${user.isActive ? 'text-red-600' : 'text-emerald-600'}`}
-                    >
-                      {user.isActive ? 'Disable' : 'Enable'}
-                    </button>
+                    <div className="flex justify-end gap-3">
+                      {user.locked ? (
+                        <button
+                          type="button"
+                          onClick={() => unlock.mutate(user.id)}
+                          disabled={unlock.isPending}
+                          className="text-xs font-medium text-amber-700 hover:underline disabled:opacity-50"
+                        >
+                          Unlock
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => toggle.mutate({ id: user.id, isActive: !user.isActive })}
+                        disabled={toggle.isPending}
+                        className={`text-xs font-medium hover:underline disabled:opacity-50 ${user.isActive ? 'text-red-600' : 'text-emerald-600'}`}
+                      >
+                        {user.isActive ? 'Disable' : 'Enable'}
+                      </button>
+                    </div>
                   </td>
                 ) : null}
               </tr>

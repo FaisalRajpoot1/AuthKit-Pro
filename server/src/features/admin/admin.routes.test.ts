@@ -43,4 +43,11 @@ describe('admin route guards', () => {
     const res = await request(app).get('/api/v1/admin/audit-logs');
     expect(res.status).toBe(401);
   });
+
+  it('rejects unlocking a user without auth (401)', async () => {
+    const res = await request(app).post(
+      '/api/v1/admin/users/00000000-0000-0000-0000-000000000000/unlock',
+    );
+    expect(res.status).toBe(401);
+  });
 });

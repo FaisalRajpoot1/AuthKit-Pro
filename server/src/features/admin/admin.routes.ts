@@ -28,6 +28,7 @@ adminRouter.patch(
   validateBody(setUserActiveSchema),
   asyncHandler(dashboard.setUserActive),
 );
+adminRouter.post('/users/:id/unlock', requirePermission('users:manage'), asyncHandler(dashboard.unlock));
 adminRouter.get(
   '/audit-logs',
   requirePermission('audit_logs:read'),
