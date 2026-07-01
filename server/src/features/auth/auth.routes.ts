@@ -5,6 +5,7 @@ import { validateBody } from '../../middleware/validate.middleware';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { emailVerificationRouter } from '../email-verification/emailVerification.routes';
 import { oauthRouter } from '../oauth/oauth.routes';
+import { passkeysAuthRouter } from '../passkeys/passkeys.routes';
 import { passwordResetRouter } from '../password-reset/passwordReset.routes';
 import { passwordlessRouter } from '../passwordless/passwordless.routes';
 import * as authController from './auth.controller';
@@ -21,6 +22,7 @@ authRouter.use('/email', emailVerificationRouter);
 authRouter.use('/password', passwordResetRouter);
 authRouter.use('/oauth', oauthRouter);
 authRouter.use('/passwordless', passwordlessRouter);
+authRouter.use('/passkeys', passkeysAuthRouter);
 
 authRouter.post(
   '/register',

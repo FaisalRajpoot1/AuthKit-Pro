@@ -125,3 +125,46 @@ export function verifyOAuthState(token: string): OAuthStatePayload {
     throw new UnauthorizedError('Invalid or expired OAuth state');
   }
 }
+
+const WEBAUTHN_AUDIENCE = 'authkit-webauthn';
+
+/** Signed, short-lived WebAuthn challenge binding the expected challenge value. */
+export interface WebAuthnChallengePayload {
+  challenge: string;
+  purpose: 'register' | 'authenticate';
+  userId?: string;
+}
+
+export function signWebAuthnChallenge(payload: WebAuthnChallengePayload): string {
+  return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    expiresIn: '5m',
+    algorithm: ALGORITHM,
+    issuer: 'authkit',
+    audience: WEBAUTHN_AUDIENCE,
+  });
+}
+
+export function verifyWebAuthnChallenge(token: string): WebAuthnChallengePayload {
+  try {
+    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET, {
+      algorithms: [ALGORITHM],
+      issuer: 'authkit',
+      audience: WEBAUTHN_AUDIENCE,
+    });
+    if (
+      typeof decoded === 'string' ||
+      typeof decoded.challenge !== 'string' ||
+      (decoded.purpose !== 'register' && decoded.purpose !== 'authenticate')
+    ) {
+      throw new UnauthorizedError('Invalid WebAuthn challenge');
+    }
+    return {
+      challenge: decoded.challenge,
+      purpose: decoded.purpose,
+      ...(typeof decoded.userId === 'string' ? { userId: decoded.userId } : {}),
+    };
+  } catch (error) {
+    if (error instanceof UnauthorizedError) throw error;
+    throw new UnauthorizedError('WebAuthn challenge is invalid or has expired');
+  }
+}

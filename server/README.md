@@ -145,6 +145,17 @@ src/
   is rejected immediately.
 - Demonstrated by `/api/v1/programmatic/*` (profile, sessions).
 
+## Passkeys (WebAuthn)
+
+- Register **passkeys** (Face ID / Touch ID / Windows Hello / security keys) and
+  sign in with them — phishing-resistant, no password. Public keys stored;
+  private keys never leave the device. Counter is tracked to detect cloned
+  authenticators.
+- Ceremonies use `@simplewebauthn/server`; the challenge is bound to a signed,
+  httpOnly cookie. A passkey login is strong auth and completes without a
+  separate 2FA step.
+- Configure `WEBAUTHN_RP_ID` / `WEBAUTHN_ORIGIN` for your domain.
+
 ## Passwordless login
 
 - **Magic link** and **email OTP** sign-in — no password required. Tokens are

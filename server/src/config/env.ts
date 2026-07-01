@@ -60,6 +60,12 @@ const envSchema = z.object({
   TOTP_ISSUER: z.string().default('AuthKit Pro'),
   TRUSTED_DEVICE_TTL_DAYS: z.coerce.number().int().positive().default(30),
 
+  // WebAuthn / passkeys. RP ID is the registrable domain (no scheme/port);
+  // origin is the full frontend origin. Defaults suit local development.
+  WEBAUTHN_RP_ID: z.string().default('localhost'),
+  WEBAUTHN_RP_NAME: z.string().default('AuthKit Pro'),
+  WEBAUTHN_ORIGIN: z.string().url().default('http://localhost:5173'),
+
   // OAuth. Public base URL of THIS API (for building provider redirect URIs).
   SERVER_PUBLIC_URL: z.string().url().default('http://localhost:4000'),
   GOOGLE_CLIENT_ID: z.string().optional(),

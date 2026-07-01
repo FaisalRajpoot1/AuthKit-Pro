@@ -6,6 +6,10 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **Passkeys / WebAuthn** (Module 12): register passkeys and sign in with them
+  (phishing-resistant, no password). Public keys stored, counters tracked,
+  challenge bound to a signed cookie; passkey login completes without a separate
+  2FA step.
 - **Brute-force protection** (Module 14): failed-login tracking + temporary
   account lockout after repeated failures, with an admin unlock action and a
   login-attempts record.

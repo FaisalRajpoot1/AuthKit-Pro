@@ -72,3 +72,28 @@ export function clearOAuthStateCookie(res: Response): void {
     path: OAUTH_STATE_PATH,
   });
 }
+
+/** Short-lived WebAuthn challenge cookie, sent to both passkey verify routes. */
+export const WEBAUTHN_COOKIE_NAME = 'authkit_webauthn';
+const WEBAUTHN_PATH = '/api/v1';
+
+export function setWebAuthnCookie(res: Response, token: string): void {
+  res.cookie(WEBAUTHN_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: isProduction || env.COOKIE_SECURE,
+    sameSite: 'lax',
+    domain: env.COOKIE_DOMAIN,
+    path: WEBAUTHN_PATH,
+    maxAge: 5 * 60 * 1000,
+  });
+}
+
+export function clearWebAuthnCookie(res: Response): void {
+  res.clearCookie(WEBAUTHN_COOKIE_NAME, {
+    httpOnly: true,
+    secure: isProduction || env.COOKIE_SECURE,
+    sameSite: 'lax',
+    domain: env.COOKIE_DOMAIN,
+    path: WEBAUTHN_PATH,
+  });
+}

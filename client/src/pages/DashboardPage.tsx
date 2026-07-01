@@ -3,6 +3,7 @@ import { AccountSettingsCard } from '@/components/AccountSettingsCard';
 import { ActivityCard } from '@/components/ActivityCard';
 import { ApiKeysCard } from '@/components/ApiKeysCard';
 import { ConnectedAccountsCard } from '@/components/ConnectedAccountsCard';
+import { PasskeysCard } from '@/components/PasskeysCard';
 import { SessionsCard } from '@/components/SessionsCard';
 import { TwoFactorCard } from '@/components/TwoFactorCard';
 import { Button } from '@/components/ui';
@@ -49,6 +50,7 @@ export function DashboardPage(): JSX.Element {
 
         <AccountSettingsCard />
         <TwoFactorCard />
+        <PasskeysCard />
         <ConnectedAccountsCard />
         <ApiKeysCard />
         <SessionsCard />

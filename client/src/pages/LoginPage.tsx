@@ -8,13 +8,29 @@ import { TwoFactorStep } from '@/components/TwoFactorStep';
 import { Button, TextField } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthContext';
 import { loginFormSchema, type LoginFormValues } from '@/features/auth/auth.types';
+import { loginWithPasskey, passkeysSupported } from '@/features/passkeys/passkeys.api';
 import { getApiErrorMessage } from '@/lib/apiError';
 
 export function LoginPage(): JSX.Element {
-  const { login } = useAuth();
+  const { login, refresh } = useAuth();
   const navigate = useNavigate();
   const [formError, setFormError] = useState<string | null>(null);
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+
+  const signInWithPasskey = async (): Promise<void> => {
+    setFormError(null);
+    setPasskeyBusy(true);
+    try {
+      await loginWithPasskey();
+      await refresh();
+      navigate('/dashboard', { replace: true });
+    } catch (error) {
+      setFormError(getApiErrorMessage(error, 'Passkey sign-in failed or was cancelled'));
+    } finally {
+      setPasskeyBusy(false);
+    }
+  };
 
   const {
     register,
@@ -70,6 +86,17 @@ export function LoginPage(): JSX.Element {
           Sign in
         </Button>
       </form>
+
+      {passkeysSupported() ? (
+        <button
+          type="button"
+          onClick={signInWithPasskey}
+          disabled={passkeyBusy}
+          className="mt-4 w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+        >
+          {passkeyBusy ? 'Waiting for passkey…' : '🔑 Sign in with a passkey'}
+        </button>
+      ) : null}
 
       <p className="mt-4 text-center text-sm text-slate-500">
         <Link to="/passwordless" className="font-medium text-indigo-600 hover:underline">
