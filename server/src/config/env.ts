@@ -52,6 +52,12 @@ const envSchema = z.object({
     .default('true')
     .transform((value) => value !== 'false'),
 
+  // Reject passwords found in known breaches (Have I Been Pwned, k-anonymity).
+  HIBP_ENABLED: z
+    .string()
+    .default('true')
+    .transform((value) => value !== 'false'),
+
   // Single-use token lifetimes.
   EMAIL_VERIFICATION_TTL_HOURS: z.coerce.number().int().positive().default(24),
   PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(30),

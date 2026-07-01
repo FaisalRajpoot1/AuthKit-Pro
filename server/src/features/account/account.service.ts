@@ -1,6 +1,7 @@
 import type { User } from '@prisma/client';
 import { logger } from '../../lib/logger';
 import { hashPassword, verifyPassword } from '../../lib/password';
+import { assertPasswordNotPwned } from '../../lib/pwnedPasswords';
 import { prisma } from '../../lib/prisma';
 import { ConflictError, NotFoundError, UnauthorizedError } from '../../utils/errors';
 import { recordAudit } from '../audit/audit.service';
@@ -59,6 +60,7 @@ export async function changePassword(
     throw new UnauthorizedError('Current password is incorrect');
   }
 
+  await assertPasswordNotPwned(input.newPassword);
   const passwordHash = await hashPassword(input.newPassword);
 
   await prisma.$transaction(async (tx) => {

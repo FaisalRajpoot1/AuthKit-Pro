@@ -2,6 +2,7 @@ import { env } from '../../config/env';
 import { emailService } from '../../lib/email/email.service';
 import { logger } from '../../lib/logger';
 import { hashPassword } from '../../lib/password';
+import { assertPasswordNotPwned } from '../../lib/pwnedPasswords';
 import { prisma } from '../../lib/prisma';
 import { generateOpaqueToken, hashToken } from '../../lib/tokens';
 import { ValidationError } from '../../utils/errors';
@@ -66,6 +67,7 @@ export async function resetPassword(
     throw new ValidationError('This reset link has expired');
   }
 
+  await assertPasswordNotPwned(input.password);
   const passwordHash = await hashPassword(input.password);
 
   await prisma.$transaction(async (tx) => {

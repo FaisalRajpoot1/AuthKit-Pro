@@ -2,6 +2,7 @@ import type { Prisma, RefreshToken, Session, User } from '@prisma/client';
 import { signAccessToken, signTwoFactorChallenge, verifyTwoFactorChallenge } from '../../lib/jwt';
 import { logger } from '../../lib/logger';
 import { hashPassword, verifyPassword } from '../../lib/password';
+import { assertPasswordNotPwned } from '../../lib/pwnedPasswords';
 import { prisma } from '../../lib/prisma';
 import { generateRefreshToken, hashToken } from '../../lib/tokens';
 import { ConflictError, TooManyRequestsError, UnauthorizedError } from '../../utils/errors';
@@ -79,6 +80,7 @@ export async function register(input: RegisterInput, context: RequestContext): P
     throw new ConflictError('That email or username is already in use');
   }
 
+  await assertPasswordNotPwned(input.password);
   const passwordHash = await hashPassword(input.password);
 
   const user = await prisma.user.create({

@@ -6,6 +6,10 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **Breached-password check** (Module 14): passwords are checked against Have I
+  Been Pwned (k-anonymity — only a 5-char SHA-1 prefix is sent) on register,
+  password reset, and password change; breached passwords are rejected. Fails
+  open on outage; toggle with `HIBP_ENABLED`.
 - **Email OTP as a 2FA factor** (Module 5): during the 2FA challenge, users can
   request a one-time code by email as an alternative to their authenticator or
   backup codes (single-use, expiring, attempt-capped).

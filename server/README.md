@@ -32,6 +32,8 @@ src/
 - Centralized error handling with stable error codes
 - **Brute-force protection**: failed logins are tracked; an account locks for a
   window after repeated failures (admins can unlock)
+- **Breached-password check** (Have I Been Pwned, k-anonymity) on register,
+  reset, and change — rejects passwords found in known breaches
 
 ## Phase 2 — implemented
 
