@@ -9,8 +9,13 @@ export interface AccessTokenPayload {
   sid: string; // session id — identifies the originating device session
 }
 
+// Pin the algorithm on both sign and verify (defense-in-depth against
+// algorithm-substitution attacks).
+const ALGORITHM = 'HS256' as const;
+
 const ACCESS_TOKEN_OPTIONS: SignOptions = {
   expiresIn: env.ACCESS_TOKEN_TTL as NonNullable<SignOptions['expiresIn']>,
+  algorithm: ALGORITHM,
   issuer: 'authkit',
   audience: 'authkit-client',
 };
@@ -22,6 +27,7 @@ export function signAccessToken(payload: AccessTokenPayload): string {
 export function verifyAccessToken(token: string): AccessTokenPayload {
   try {
     const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET, {
+      algorithms: [ALGORITHM],
       issuer: 'authkit',
       audience: 'authkit-client',
     });
@@ -51,6 +57,7 @@ const TWO_FACTOR_AUDIENCE = 'authkit-2fa';
 export function signTwoFactorChallenge(userId: string): string {
   return jwt.sign({ sub: userId }, env.JWT_ACCESS_SECRET, {
     expiresIn: '5m',
+    algorithm: ALGORITHM,
     issuer: 'authkit',
     audience: TWO_FACTOR_AUDIENCE,
   });
@@ -59,6 +66,7 @@ export function signTwoFactorChallenge(userId: string): string {
 export function verifyTwoFactorChallenge(token: string): { userId: string } {
   try {
     const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET, {
+      algorithms: [ALGORITHM],
       issuer: 'authkit',
       audience: TWO_FACTOR_AUDIENCE,
     });
@@ -85,6 +93,7 @@ export interface OAuthStatePayload {
 export function signOAuthState(payload: OAuthStatePayload): string {
   return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
     expiresIn: '10m',
+    algorithm: ALGORITHM,
     issuer: 'authkit',
     audience: OAUTH_AUDIENCE,
   });
@@ -93,6 +102,7 @@ export function signOAuthState(payload: OAuthStatePayload): string {
 export function verifyOAuthState(token: string): OAuthStatePayload {
   try {
     const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET, {
+      algorithms: [ALGORITHM],
       issuer: 'authkit',
       audience: OAUTH_AUDIENCE,
     });

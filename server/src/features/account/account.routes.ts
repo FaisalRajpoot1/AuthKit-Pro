@@ -15,8 +15,9 @@ import {
 /** Account/profile self-management, mounted at /api/v1/account. */
 export const accountRouter = Router();
 
-// Public: pre-registration availability check.
-accountRouter.get('/availability', asyncHandler(controller.checkAvailability));
+// Public: pre-registration availability check. Rate-limited to blunt its use as
+// an account-enumeration oracle.
+accountRouter.get('/availability', authRateLimiter, asyncHandler(controller.checkAvailability));
 
 // Two-factor management (the sub-router applies its own auth guard).
 accountRouter.use('/2fa', twoFactorRouter);

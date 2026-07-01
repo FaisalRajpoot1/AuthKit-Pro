@@ -63,15 +63,30 @@ describe('auth flow (integration)', () => {
     expect(successor.status).toBe(401);
   });
 
-  it('logs out and invalidates the refresh token', async () => {
+  it('logs out and invalidates both the refresh token and the access token', async () => {
     const registered = await request(app).post('/api/v1/auth/register').send(testUser());
     const cookie = getSetCookie(registered, REFRESH_COOKIE)!;
+    const accessToken = registered.body.accessToken as string;
+
+    // Access token works before logout.
+    const before = await request(app)
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${accessToken}`);
+    expect(before.status).toBe(200);
 
     const loggedOut = await request(app).post('/api/v1/auth/logout').set('Cookie', cookie);
     expect(loggedOut.status).toBe(204);
 
+    // Refresh cookie is now invalid...
     const afterLogout = await request(app).post('/api/v1/auth/refresh').set('Cookie', cookie);
     expect(afterLogout.status).toBe(401);
+
+    // ...and the still-unexpired access token is rejected because its session
+    // was revoked (no waiting out the token TTL).
+    const meAfter = await request(app)
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${accessToken}`);
+    expect(meAfter.status).toBe(401);
   });
 
   it('prevents duplicate email/username registration (409)', async () => {

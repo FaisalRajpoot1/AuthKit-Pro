@@ -64,12 +64,13 @@ async function issueTokens(
 export async function register(input: RegisterInput, context: RequestContext): Promise<AuthResult> {
   const existing = await prisma.user.findFirst({
     where: { OR: [{ email: input.email }, { username: input.username }] },
-    select: { email: true, username: true },
+    select: { id: true },
   });
 
   if (existing) {
-    const field = existing.email === input.email ? 'email' : 'username';
-    throw new ConflictError(`That ${field} is already taken`);
+    // Generic message so registration can't be used to enumerate which emails
+    // or usernames are already registered.
+    throw new ConflictError('That email or username is already in use');
   }
 
   const passwordHash = await hashPassword(input.password);
@@ -232,6 +233,18 @@ export async function refresh(
       throw new UnauthorizedError('Account is no longer active');
     }
 
+    // Atomically claim the rotation: only the request that flips revokedAt from
+    // null wins. A concurrent request presenting the same token loses the race
+    // (count === 0) and is treated as reuse — closing the double-spend window.
+    const claim = await tx.refreshToken.updateMany({
+      where: { id: stored.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    if (claim.count === 0) {
+      await revokeSession(stored.sessionId, tx);
+      return { reuse: true as const, userId: stored.userId };
+    }
+
     const expiresAt = refreshExpiry();
     const tokens = await issueTokens(stored.user, stored.sessionId, expiresAt, tx);
     const successor = await tx.refreshToken.findUnique({
@@ -241,7 +254,7 @@ export async function refresh(
 
     await tx.refreshToken.update({
       where: { id: stored.id },
-      data: { revokedAt: new Date(), replacedById: successor?.id ?? null },
+      data: { replacedById: successor?.id ?? null },
     });
     await touchSession(stored.sessionId, context, expiresAt, tx);
 

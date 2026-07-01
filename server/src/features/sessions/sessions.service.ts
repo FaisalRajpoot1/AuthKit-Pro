@@ -3,11 +3,40 @@ import { env } from '../../config/env';
 import { parseDevice } from '../../lib/device';
 import { lookupLocation } from '../../lib/geo';
 import { prisma } from '../../lib/prisma';
-import { NotFoundError } from '../../utils/errors';
+import { NotFoundError, UnauthorizedError } from '../../utils/errors';
 import type { RequestContext } from '../auth/auth.types';
 import { toSessionDto, type SessionDto } from './sessions.types';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * Verifies that an access token's session is still usable: the session exists,
+ * belongs to the user, is not revoked or expired, and the user is active. This
+ * makes logout, remote session revocation, and account disable take effect
+ * immediately instead of waiting out the access token's TTL.
+ */
+export async function assertSessionActive(userId: string, sessionId: string): Promise<void> {
+  const session = await prisma.session.findUnique({
+    where: { id: sessionId },
+    select: {
+      userId: true,
+      revokedAt: true,
+      expiresAt: true,
+      user: { select: { isActive: true, deletedAt: true } },
+    },
+  });
+
+  if (
+    !session ||
+    session.userId !== userId ||
+    session.revokedAt !== null ||
+    session.expiresAt.getTime() < Date.now() ||
+    !session.user.isActive ||
+    session.user.deletedAt !== null
+  ) {
+    throw new UnauthorizedError('Session is no longer valid');
+  }
+}
 
 /** Absolute expiry for a (sliding) session/refresh token from now. */
 export function refreshExpiry(): Date {
