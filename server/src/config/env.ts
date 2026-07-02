@@ -97,6 +97,12 @@ const envSchema = z.object({
   TWITTER_CLIENT_ID: z.string().optional(),
   TWITTER_CLIENT_SECRET: z.string().optional(),
 
+  // SMS delivery (Twilio) for SMS-based 2FA. Leave the SID/token blank to log
+  // SMS to the console (development) instead of sending.
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_FROM_NUMBER: z.string().optional(),
+
   // Optional Redis. When set, rate limiting uses a shared Redis store so limits
   // hold across multiple server instances; otherwise an in-process store is used.
   REDIS_URL: z.string().url().optional(),

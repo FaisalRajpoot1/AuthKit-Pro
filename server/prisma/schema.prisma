@@ -27,6 +27,10 @@ model User {
   twoFactorSecret    String?   @map("two_factor_secret")
   twoFactorEnabledAt DateTime? @map("two_factor_enabled_at")
 
+  // SMS-based 2FA fallback. A phone is usable only once verified via an SMS code.
+  phoneNumber     String?   @map("phone_number")
+  phoneVerifiedAt DateTime? @map("phone_verified_at")
+
   // Brute-force protection.
   failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
   lockedUntil         DateTime? @map("locked_until")
@@ -453,6 +457,8 @@ enum LoginTokenType {
   MAGIC_LINK
   EMAIL_OTP
   TWO_FACTOR_OTP
+  TWO_FACTOR_SMS_OTP
+  PHONE_VERIFICATION
 
   @@map("login_token_type")
 }

@@ -28,6 +28,10 @@ export const twoFactorEmailOtpSchema = z.object({
   challengeToken: z.string().min(1, 'Challenge token is required'),
 });
 
+export const twoFactorSmsOtpSchema = z.object({
+  challengeToken: z.string().min(1, 'Challenge token is required'),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type TwoFactorLoginInput = z.infer<typeof twoFactorLoginSchema>;

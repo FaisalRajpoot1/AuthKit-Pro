@@ -15,6 +15,19 @@ export const regenerateBackupCodesSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+export const setupSmsSchema = z.object({
+  phoneNumber: z
+    .string()
+    .trim()
+    .regex(/^\+[1-9]\d{6,14}$/, 'Enter a phone number in international format, e.g. +14155552671'),
+});
+
+export const verifySmsSchema = z.object({
+  code: z.string().trim().regex(/^\d{6}$/, 'Enter the 6-digit code'),
+});
+
 export type EnableTwoFactorInput = z.infer<typeof enableTwoFactorSchema>;
 export type DisableTwoFactorInput = z.infer<typeof disableTwoFactorSchema>;
 export type RegenerateBackupCodesInput = z.infer<typeof regenerateBackupCodesSchema>;
+export type SetupSmsInput = z.infer<typeof setupSmsSchema>;
+export type VerifySmsInput = z.infer<typeof verifySmsSchema>;

@@ -86,6 +86,10 @@ src/
 - **Email OTP fallback**: during the challenge, a user can request a one-time
   code by email (`/auth/2fa/email-otp/request`) as an alternative second factor —
   single-use, expiring, and attempt-capped.
+- **SMS OTP fallback**: register and verify a phone (`/account/2fa/sms/setup` +
+  `/sms/verify`), then request a one-time code by SMS during the challenge
+  (`/auth/2fa/sms-otp/request`). Pluggable SMS transport — Twilio when configured,
+  console logging in development. Codes are single-use, expiring, attempt-capped.
 
 ## Phase 4B — OAuth (Google · GitHub · Microsoft · Discord · Facebook · LinkedIn · X)
 

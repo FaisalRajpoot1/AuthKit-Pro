@@ -6,6 +6,12 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **SMS OTP as a 2FA factor** (Module 5): register and verify a phone number,
+  then receive one-time sign-in codes by SMS during the 2FA challenge — an
+  alternative to the authenticator, backup codes, or email OTP. Pluggable SMS
+  transport (Twilio via REST when configured, console otherwise); phones are
+  usable only after verification, and codes are single-use, expiring, and
+  attempt-capped. 2FA status now reports the masked verified phone.
 - **PKCE + X (Twitter) OAuth** (Module 4): the OAuth flow now supports PKCE
   (S256) per provider — a code verifier is minted, carried inside the signed
   state token, and its challenge sent in the authorization URL. Added X/Twitter

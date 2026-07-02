@@ -252,7 +252,7 @@ export const openApiDocument = {
     },
 
     '/account/2fa': {
-      get: { tags: ['Two-Factor'], summary: '2FA status', security: bearer, responses: { 200: jsonResponse('Status', { type: 'object', properties: { enabled: { type: 'boolean' }, backupCodesRemaining: { type: 'integer' } } }), 401: commonResponses[401] } },
+      get: { tags: ['Two-Factor'], summary: '2FA status', security: bearer, responses: { 200: jsonResponse('Status', { type: 'object', properties: { enabled: { type: 'boolean' }, backupCodesRemaining: { type: 'integer' }, sms: { type: 'object', properties: { enabled: { type: 'boolean' }, phone: { type: 'string', nullable: true } } } } }), 401: commonResponses[401] } },
     },
     '/account/2fa/setup': {
       post: { tags: ['Two-Factor'], summary: 'Start 2FA enrollment (QR + secret)', security: bearer, responses: { 200: jsonResponse('Setup', { type: 'object', properties: { secret: { type: 'string' }, otpauthUrl: { type: 'string' }, qrCodeDataUrl: { type: 'string' } } }), 401: commonResponses[401] } },
@@ -265,6 +265,18 @@ export const openApiDocument = {
     },
     '/account/2fa/backup-codes': {
       post: { tags: ['Two-Factor'], summary: 'Regenerate backup codes', security: bearer, requestBody: jsonBody({ type: 'object', required: ['password'], properties: { password: { type: 'string' } } }), responses: { 200: jsonResponse('New codes', { type: 'object', properties: { backupCodes: { type: 'array', items: { type: 'string' } } } }), 401: commonResponses[401] } },
+    },
+    '/account/2fa/sms/setup': {
+      post: { tags: ['Two-Factor'], summary: 'Register a phone for SMS 2FA (sends a code)', security: bearer, requestBody: jsonBody({ type: 'object', required: ['phoneNumber'], properties: { phoneNumber: { type: 'string', example: '+14155552671' } } }), responses: { 202: jsonResponse('Code sent', ref('Message')), 400: commonResponses[400], 401: commonResponses[401] } },
+    },
+    '/account/2fa/sms/verify': {
+      post: { tags: ['Two-Factor'], summary: 'Confirm the SMS code to enable SMS 2FA', security: bearer, requestBody: jsonBody({ type: 'object', required: ['code'], properties: { code: { type: 'string' } } }), responses: { 200: jsonResponse('Verified', ref('Message')), 401: commonResponses[401] } },
+    },
+    '/account/2fa/sms': {
+      delete: { tags: ['Two-Factor'], summary: 'Remove the SMS 2FA channel', security: bearer, responses: { 200: jsonResponse('Removed', ref('Message')), 401: commonResponses[401] } },
+    },
+    '/auth/2fa/sms-otp/request': {
+      post: { tags: ['Two-Factor'], summary: 'Send an SMS 2FA code during the login challenge', requestBody: jsonBody({ type: 'object', required: ['challengeToken'], properties: { challengeToken: { type: 'string' } } }), responses: { 202: jsonResponse('Code sent', ref('Message')), 401: commonResponses[401], 409: commonResponses[409] } },
     },
 
     '/sessions': {

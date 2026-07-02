@@ -33,3 +33,18 @@ export async function regenerateBackupCodes(req: Request, res: Response): Promis
   );
   res.status(200).json(result);
 }
+
+export async function setupSms(req: Request, res: Response): Promise<void> {
+  const result = await service.setupSmsFactor(req.user!.id, req.body.phoneNumber);
+  res.status(202).json({ message: 'A verification code has been sent by SMS', ...result });
+}
+
+export async function verifySms(req: Request, res: Response): Promise<void> {
+  await service.verifyPhoneNumber(req.user!.id, req.body.code);
+  res.status(200).json({ message: 'Phone number verified' });
+}
+
+export async function removeSms(req: Request, res: Response): Promise<void> {
+  await service.removeSmsFactor(req.user!.id);
+  res.status(200).json({ message: 'SMS two-factor removed' });
+}

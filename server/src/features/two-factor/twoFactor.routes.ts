@@ -8,6 +8,8 @@ import {
   disableTwoFactorSchema,
   enableTwoFactorSchema,
   regenerateBackupCodesSchema,
+  setupSmsSchema,
+  verifySmsSchema,
 } from './twoFactor.schema';
 
 /** Two-factor management, mounted at /api/v1/account/2fa. All require auth. */
@@ -35,3 +37,18 @@ twoFactorRouter.post(
   validateBody(regenerateBackupCodesSchema),
   asyncHandler(controller.regenerateBackupCodes),
 );
+
+// SMS 2FA channel: register a phone, confirm it, or remove it.
+twoFactorRouter.post(
+  '/sms/setup',
+  authRateLimiter,
+  validateBody(setupSmsSchema),
+  asyncHandler(controller.setupSms),
+);
+twoFactorRouter.post(
+  '/sms/verify',
+  authRateLimiter,
+  validateBody(verifySmsSchema),
+  asyncHandler(controller.verifySms),
+);
+twoFactorRouter.delete('/sms', authRateLimiter, asyncHandler(controller.removeSms));

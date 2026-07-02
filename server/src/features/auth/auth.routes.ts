@@ -15,6 +15,7 @@ import {
   registerSchema,
   twoFactorEmailOtpSchema,
   twoFactorLoginSchema,
+  twoFactorSmsOtpSchema,
 } from './auth.schema';
 
 /**
@@ -51,6 +52,13 @@ authRouter.post(
   authRateLimiter,
   validateBody(twoFactorEmailOtpSchema),
   asyncHandler(authController.twoFactorEmailOtp),
+);
+
+authRouter.post(
+  '/2fa/sms-otp/request',
+  authRateLimiter,
+  validateBody(twoFactorSmsOtpSchema),
+  asyncHandler(authController.twoFactorSmsOtp),
 );
 
 authRouter.post(

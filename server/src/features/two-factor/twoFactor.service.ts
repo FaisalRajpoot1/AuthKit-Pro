@@ -4,6 +4,7 @@ import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import { env } from '../../config/env';
 import { emailService } from '../../lib/email/email.service';
+import { smsService } from '../../lib/sms/sms.service';
 import { decrypt, encrypt } from '../../lib/encryption';
 import { logger } from '../../lib/logger';
 import { verifyPassword } from '../../lib/password';
@@ -21,7 +22,19 @@ const BACKUP_CODE_COUNT = 10;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const EMAIL_OTP_TTL_MS = 10 * 60 * 1000;
 const EMAIL_OTP_MAX_ATTEMPTS = 5;
+const SMS_OTP_TTL_MS = 10 * 60 * 1000;
+const PHONE_VERIFICATION_TTL_MS = 10 * 60 * 1000;
 const TOTP_CODE_PATTERN = /^\d{6}$/;
+
+/** Six-digit numeric one-time code, zero-padded. */
+function generateNumericCode(): string {
+  return randomInt(0, 1_000_000).toString().padStart(6, '0');
+}
+
+/** Masks a phone number for display, keeping only the last two digits. */
+function maskPhone(phone: string): string {
+  return phone.length <= 2 ? phone : `${'•'.repeat(phone.length - 2)}${phone.slice(-2)}`;
+}
 
 async function requireUser(userId: string): Promise<User> {
   const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
@@ -165,14 +178,23 @@ export async function regenerateBackupCodes(
   return { backupCodes };
 }
 
-export async function getStatus(
-  userId: string,
-): Promise<{ enabled: boolean; backupCodesRemaining: number }> {
+export async function getStatus(userId: string): Promise<{
+  enabled: boolean;
+  backupCodesRemaining: number;
+  sms: { enabled: boolean; phone: string | null };
+}> {
   const user = await requireUser(userId);
   const backupCodesRemaining = user.twoFactorEnabled
     ? await prisma.backupCode.count({ where: { userId, usedAt: null } })
     : 0;
-  return { enabled: user.twoFactorEnabled, backupCodesRemaining };
+  return {
+    enabled: user.twoFactorEnabled,
+    backupCodesRemaining,
+    sms: {
+      enabled: Boolean(user.phoneNumber && user.phoneVerifiedAt),
+      phone: user.phoneNumber ? maskPhone(user.phoneNumber) : null,
+    },
+  };
 }
 
 /**
@@ -198,18 +220,27 @@ export async function verifySecondFactor(user: User, code: string): Promise<bool
     return true;
   }
 
-  // A 6-digit emailed 2FA code (fallback when the authenticator isn't handy).
-  if (TOTP_CODE_PATTERN.test(trimmed) && (await verifyEmailOtp(user.id, trimmed))) {
-    return true;
+  // A 6-digit code delivered out-of-band by email or SMS (a fallback for when
+  // the authenticator isn't handy).
+  if (TOTP_CODE_PATTERN.test(trimmed)) {
+    if (await consumeDeliveredOtp(user.id, 'TWO_FACTOR_OTP', trimmed)) return true;
+    if (await consumeDeliveredOtp(user.id, 'TWO_FACTOR_SMS_OTP', trimmed)) return true;
   }
 
   return false;
 }
 
-/** Checks (and consumes) an emailed 2FA one-time code, with an attempt cap. */
-async function verifyEmailOtp(userId: string, code: string): Promise<boolean> {
+/**
+ * Checks (and consumes) a delivered one-time 2FA code of the given type, with an
+ * attempt cap. Shared by the email- and SMS-delivered code channels.
+ */
+async function consumeDeliveredOtp(
+  userId: string,
+  type: 'TWO_FACTOR_OTP' | 'TWO_FACTOR_SMS_OTP' | 'PHONE_VERIFICATION',
+  code: string,
+): Promise<boolean> {
   const token = await prisma.loginToken.findFirst({
-    where: { userId, type: 'TWO_FACTOR_OTP', consumedAt: null },
+    where: { userId, type, consumedAt: null },
     orderBy: { createdAt: 'desc' },
   });
   if (!token || token.expiresAt.getTime() < Date.now() || token.attempts >= EMAIL_OTP_MAX_ATTEMPTS) {
@@ -238,7 +269,7 @@ export async function requestEmailOtp(userId: string): Promise<void> {
     throw new ConflictError('Two-factor authentication is not enabled');
   }
 
-  const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
+  const code = generateNumericCode();
   await prisma.$transaction([
     prisma.loginToken.deleteMany({ where: { userId, type: 'TWO_FACTOR_OTP' } }),
     prisma.loginToken.create({
@@ -253,6 +284,98 @@ export async function requestEmailOtp(userId: string): Promise<void> {
 
   await emailService.sendLoginOtpEmail(user.email, code);
   logger.info({ userId }, 'Two-factor email OTP sent');
+}
+
+/** E.164 phone number, e.g. +14155552671. */
+const E164_PATTERN = /^\+[1-9]\d{6,14}$/;
+
+/**
+ * Registers a phone number for SMS-based 2FA and sends a verification code. The
+ * phone is stored unverified until confirmed via {@link verifyPhoneNumber}.
+ */
+export async function setupSmsFactor(userId: string, phoneNumber: string): Promise<{ phone: string }> {
+  const phone = phoneNumber.trim();
+  if (!E164_PATTERN.test(phone)) {
+    throw new ValidationError('Enter a phone number in international format, e.g. +14155552671');
+  }
+  const user = await requireUser(userId);
+
+  const code = generateNumericCode();
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
+      data: { phoneNumber: phone, phoneVerifiedAt: null },
+    }),
+    prisma.loginToken.deleteMany({ where: { userId, type: 'PHONE_VERIFICATION' } }),
+    prisma.loginToken.create({
+      data: {
+        userId,
+        type: 'PHONE_VERIFICATION',
+        tokenHash: hashToken(`${userId}:${code}`),
+        expiresAt: new Date(Date.now() + PHONE_VERIFICATION_TTL_MS),
+      },
+    }),
+  ]);
+
+  await smsService.sendPhoneVerification(phone, code);
+  logger.info({ userId }, 'Phone verification code sent');
+  return { phone: maskPhone(phone) };
+}
+
+/** Confirms phone ownership with the SMS code, enabling SMS as a 2FA channel. */
+export async function verifyPhoneNumber(userId: string, code: string): Promise<void> {
+  const user = await requireUser(userId);
+  if (!user.phoneNumber) {
+    throw new ConflictError('No phone number to verify');
+  }
+  if (!(await consumeDeliveredOtp(userId, 'PHONE_VERIFICATION', code.trim()))) {
+    throw new UnauthorizedError('Invalid or expired verification code');
+  }
+  await prisma.user.update({ where: { id: userId }, data: { phoneVerifiedAt: new Date() } });
+  logger.info({ userId }, 'Phone number verified');
+}
+
+/** Removes the SMS 2FA channel: clears the phone and any pending SMS tokens. */
+export async function removeSmsFactor(userId: string): Promise<void> {
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: { phoneNumber: null, phoneVerifiedAt: null },
+    }),
+    prisma.loginToken.deleteMany({
+      where: { userId, type: { in: ['PHONE_VERIFICATION', 'TWO_FACTOR_SMS_OTP'] } },
+    }),
+  ]);
+}
+
+/**
+ * Sends a one-time 2FA code by SMS as an alternative second factor. Called
+ * during the login challenge (the first factor has already been verified).
+ */
+export async function requestSmsOtp(userId: string): Promise<void> {
+  const user = await requireUser(userId);
+  if (!user.twoFactorEnabled) {
+    throw new ConflictError('Two-factor authentication is not enabled');
+  }
+  if (!user.phoneNumber || !user.phoneVerifiedAt) {
+    throw new ConflictError('No verified phone number on file');
+  }
+
+  const code = generateNumericCode();
+  await prisma.$transaction([
+    prisma.loginToken.deleteMany({ where: { userId, type: 'TWO_FACTOR_SMS_OTP' } }),
+    prisma.loginToken.create({
+      data: {
+        userId,
+        type: 'TWO_FACTOR_SMS_OTP',
+        tokenHash: hashToken(`${userId}:${code}`),
+        expiresAt: new Date(Date.now() + SMS_OTP_TTL_MS),
+      },
+    }),
+  ]);
+
+  await smsService.sendLoginOtp(user.phoneNumber, code);
+  logger.info({ userId }, 'Two-factor SMS OTP sent');
 }
 
 function trustedDeviceExpiry(): Date {
