@@ -7,6 +7,7 @@ import { githubProvider } from './github.provider';
 import { googleProvider } from './google.provider';
 import { linkedinProvider } from './linkedin.provider';
 import { microsoftProvider } from './microsoft.provider';
+import { twitterProvider } from './twitter.provider';
 
 const PROVIDERS: Record<OAuthProvider, OAuthProviderClient> = {
   GOOGLE: googleProvider,
@@ -15,6 +16,7 @@ const PROVIDERS: Record<OAuthProvider, OAuthProviderClient> = {
   DISCORD: discordProvider,
   FACEBOOK: facebookProvider,
   LINKEDIN: linkedinProvider,
+  TWITTER: twitterProvider,
 };
 
 /** Parses a URL slug into a known provider enum, or throws 404. */

@@ -197,6 +197,7 @@ enum OAuthProvider {
   DISCORD
   FACEBOOK
   LINKEDIN
+  TWITTER
 
   @@map("oauth_provider")
 }

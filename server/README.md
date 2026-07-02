@@ -87,9 +87,9 @@ src/
   code by email (`/auth/2fa/email-otp/request`) as an alternative second factor —
   single-use, expiring, and attempt-capped.
 
-## Phase 4B — OAuth (Google · GitHub · Microsoft · Discord · Facebook · LinkedIn)
+## Phase 4B — OAuth (Google · GitHub · Microsoft · Discord · Facebook · LinkedIn · X)
 
-- **Sign in / sign up with Google, GitHub, Microsoft, Discord, Facebook, or LinkedIn.** Existing accounts are matched by
+- **Sign in / sign up with Google, GitHub, Microsoft, Discord, Facebook, LinkedIn, or X.** Existing accounts are matched by
   verified email and linked automatically; otherwise a new account is created
   (random password the user can reset later).
 - **Account linking/unlinking** for signed-in users. Unlink is refused if it
@@ -99,10 +99,14 @@ src/
   signed, httpOnly **state cookie** for CSRF), navigates to the provider, and
   the callback sets the refresh cookie and bounces back to the app, which then
   refreshes to obtain its access token.
-- Providers are a pluggable strategy (`OAuthProviderClient`); six are shipped.
-  Apple (signed-JWT client secret) and X/Twitter (mandatory PKCE) need small
-  flow additions and are not yet included. A provider is active only when its
-  client id/secret are configured.
+- **PKCE** (Proof Key for Code Exchange, S256) is supported per-provider: the
+  flow mints a verifier, stores it inside the signed state token, and sends the
+  derived challenge in the authorization URL.
+- Providers are a pluggable strategy (`OAuthProviderClient`); seven are shipped.
+  **X (Twitter)** uses OAuth2 + PKCE — note its API returns no email, so X links
+  to an existing account rather than creating one from scratch. **Apple**
+  (signed-JWT client secret + form-post callback) is the remaining provider. A
+  provider is active only when its client id/secret are configured.
 
 ## Phase 5A — RBAC & Permission System
 

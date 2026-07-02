@@ -88,6 +88,8 @@ export interface OAuthStatePayload {
   intent: 'login' | 'link';
   userId?: string;
   nonce: string;
+  /** PKCE code verifier, for providers that require Proof Key for Code Exchange. */
+  codeVerifier?: string;
 }
 
 export function signOAuthState(payload: OAuthStatePayload): string {
@@ -119,6 +121,7 @@ export function verifyOAuthState(token: string): OAuthStatePayload {
       intent: decoded.intent,
       nonce: decoded.nonce,
       ...(typeof decoded.userId === 'string' ? { userId: decoded.userId } : {}),
+      ...(typeof decoded.codeVerifier === 'string' ? { codeVerifier: decoded.codeVerifier } : {}),
     };
   } catch (error) {
     if (error instanceof UnauthorizedError) throw error;

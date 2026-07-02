@@ -94,6 +94,8 @@ const envSchema = z.object({
   FACEBOOK_CLIENT_SECRET: z.string().optional(),
   LINKEDIN_CLIENT_ID: z.string().optional(),
   LINKEDIN_CLIENT_SECRET: z.string().optional(),
+  TWITTER_CLIENT_ID: z.string().optional(),
+  TWITTER_CLIENT_SECRET: z.string().optional(),
 
   // Optional Redis. When set, rate limiting uses a shared Redis store so limits
   // hold across multiple server instances; otherwise an in-process store is used.

@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { OAuthProvider, User } from '@prisma/client';
 import { env } from '../../config/env';
 import { signOAuthState, verifyOAuthState } from '../../lib/jwt';
@@ -15,9 +15,21 @@ function redirectUri(provider: OAuthProvider): string {
   return `${env.SERVER_PUBLIC_URL}/api/v1/auth/oauth/${provider.toLowerCase()}/callback`;
 }
 
+/** URL-safe base64 (base64url) without padding, per RFC 7636. */
+function base64Url(buffer: Buffer): string {
+  return buffer.toString('base64url');
+}
+
+/** Derives the S256 PKCE code challenge from a verifier. */
+function codeChallengeFor(verifier: string): string {
+  return base64Url(createHash('sha256').update(verifier).digest());
+}
+
 /**
  * Builds a provider authorization URL and a signed state token. The state binds
  * a CSRF nonce, the intent (login vs link), and — when linking — the user id.
+ * For PKCE providers it also mints a code verifier, stores it inside the signed
+ * state, and sends the derived challenge in the authorization URL.
  */
 export function buildAuthorization(
   provider: OAuthProvider,
@@ -29,13 +41,20 @@ export function buildAuthorization(
     throw new ValidationError(`${provider} login is not configured`);
   }
 
+  const codeVerifier = client.usesPkce ? base64Url(randomBytes(32)) : undefined;
+
   const state = signOAuthState({
     provider,
     intent,
     nonce: randomUUID(),
     ...(userId ? { userId } : {}),
+    ...(codeVerifier ? { codeVerifier } : {}),
   });
-  const url = client.getAuthorizationUrl({ state, redirectUri: redirectUri(provider) });
+  const url = client.getAuthorizationUrl({
+    state,
+    redirectUri: redirectUri(provider),
+    ...(codeVerifier ? { codeChallenge: codeChallengeFor(codeVerifier) } : {}),
+  });
   return { url, state };
 }
 
@@ -69,6 +88,7 @@ export async function handleCallback(params: {
   const profile = await getProviderClient(provider).exchangeCode({
     code,
     redirectUri: redirectUri(provider),
+    ...(decoded.codeVerifier ? { codeVerifier: decoded.codeVerifier } : {}),
   });
 
   if (decoded.intent === 'link') {
