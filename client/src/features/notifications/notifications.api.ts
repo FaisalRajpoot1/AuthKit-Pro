@@ -37,3 +37,23 @@ export async function markAllNotificationsRead(): Promise<void> {
 export async function deleteNotification(id: string): Promise<void> {
   await apiClient.delete(`/notifications/${id}`);
 }
+
+// ── Web Push ─────────────────────────────────────────────────────────────────
+
+export interface PushConfig {
+  publicKey: string | null;
+  enabled: boolean;
+}
+
+export async function getPushConfig(): Promise<PushConfig> {
+  const { data } = await apiClient.get<PushConfig>('/notifications/push/public-key');
+  return data;
+}
+
+export async function subscribePush(subscription: PushSubscriptionJSON): Promise<void> {
+  await apiClient.post('/notifications/push/subscribe', subscription);
+}
+
+export async function unsubscribePush(endpoint: string): Promise<void> {
+  await apiClient.post('/notifications/push/unsubscribe', { endpoint });
+}

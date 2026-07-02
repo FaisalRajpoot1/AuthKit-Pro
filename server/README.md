@@ -166,7 +166,10 @@ src/
 
 - In-app **notifications** with unread counts: list, mark read / mark all read,
   delete. **Security alerts** are raised automatically on password change, 2FA
-  enable/disable, and account lockout.
+  enable/disable, account lockout, and new-device sign-ins.
+- **Browser push** (Web Push / VAPID): devices subscribe via a service worker and
+  `notify()` also delivers to them. No-op until `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`
+  are set. Delivery channels: **email · in-app · browser push**.
 
 ## API Keys
 

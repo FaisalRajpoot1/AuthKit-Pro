@@ -5,6 +5,7 @@ import { ApiKeysCard } from '@/components/ApiKeysCard';
 import { NotificationsBell } from '@/components/NotificationsBell';
 import { ConnectedAccountsCard } from '@/components/ConnectedAccountsCard';
 import { PasskeysCard } from '@/components/PasskeysCard';
+import { PushNotificationsCard } from '@/components/PushNotificationsCard';
 import { SessionsCard } from '@/components/SessionsCard';
 import { TwoFactorCard } from '@/components/TwoFactorCard';
 import { Button } from '@/components/ui';
@@ -55,6 +56,7 @@ export function DashboardPage(): JSX.Element {
         <PasskeysCard />
         <ConnectedAccountsCard />
         <ApiKeysCard />
+        <PushNotificationsCard />
         <SessionsCard />
         <ActivityCard />
       </div>

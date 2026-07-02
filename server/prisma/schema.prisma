@@ -58,6 +58,7 @@ model User {
   loginAttempts           LoginAttempt[]
   passkeys                Passkey[]
   notifications           Notification[]
+  pushSubscriptions       PushSubscription[]
   blockedIps              BlockedIp[]          @relation("BlockedIpCreator")
 
   @@index([deletedAt])
@@ -413,6 +414,22 @@ model Notification {
   @@index([userId, readAt])
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+/// A browser Web Push subscription (endpoint + encryption keys) for a user's
+/// device. Deleted when the push service reports it gone (404/410).
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 /// A registered WebAuthn credential (passkey / security key). The public key is

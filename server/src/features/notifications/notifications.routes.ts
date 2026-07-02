@@ -11,5 +11,11 @@ notificationsRouter.use(requireAuth);
 notificationsRouter.get('/', asyncHandler(controller.list));
 notificationsRouter.get('/unread-count', asyncHandler(controller.unreadCount));
 notificationsRouter.post('/read-all', asyncHandler(controller.markAllRead));
+
+// Web Push (browser notifications).
+notificationsRouter.get('/push/public-key', controller.pushPublicKey);
+notificationsRouter.post('/push/subscribe', asyncHandler(controller.pushSubscribe));
+notificationsRouter.post('/push/unsubscribe', asyncHandler(controller.pushUnsubscribe));
+
 notificationsRouter.post('/:id/read', asyncHandler(controller.markRead));
 notificationsRouter.delete('/:id', asyncHandler(controller.remove));

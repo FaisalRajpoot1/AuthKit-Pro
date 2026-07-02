@@ -2,6 +2,7 @@ import type { NotificationType, Prisma } from '@prisma/client';
 import { logger } from '../../lib/logger';
 import { prisma } from '../../lib/prisma';
 import { NotFoundError } from '../../utils/errors';
+import { sendPushToUser } from './push.service';
 
 const DEFAULT_PAGE = 20;
 const MAX_PAGE = 100;
@@ -57,6 +58,9 @@ export async function notify(
   } catch (error) {
     logger.error({ err: error, userId }, 'Failed to create notification');
   }
+
+  // Fan out to the browser via Web Push (best-effort, no-op when unconfigured).
+  await sendPushToUser(userId, { title: input.title, body: input.body });
 }
 
 export async function listNotifications(

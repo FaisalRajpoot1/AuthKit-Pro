@@ -114,6 +114,12 @@ const envSchema = z.object({
   // hold across multiple server instances; otherwise an in-process store is used.
   REDIS_URL: z.string().url().optional(),
 
+  // Web Push (VAPID) for browser notifications. Generate a key pair with
+  // `npx web-push generate-vapid-keys`. When unset, push is disabled (no-op).
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().default('mailto:admin@authkit.local'),
+
   // Email delivery. When SMTP_HOST is unset, emails are logged to the console
   // (development) instead of sent — handy for local flows without a mailserver.
   EMAIL_FROM: z.string().default('AuthKit Pro <no-reply@authkit.local>'),

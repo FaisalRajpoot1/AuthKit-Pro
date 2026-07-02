@@ -6,6 +6,12 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **Browser push notifications** (Module 18): Web Push (VAPID) is now a delivery
+  channel alongside email and in-app. Devices subscribe via a service worker;
+  `notify()` fans out to a user's subscribed browsers (best-effort, no-op when
+  VAPID is unset), pruning subscriptions the push service reports as gone. New
+  `/notifications/push/{public-key,subscribe,unsubscribe}` endpoints and a
+  dashboard toggle (shown only when the browser supports push and VAPID is set).
 - **Welcome & suspicious-login emails** (Modules 10/14): new registrations get a
   welcome email; a sign-in from a device/IP the account hasn't used before sends
   a security alert (email + in-app notification). Detection is conservative
