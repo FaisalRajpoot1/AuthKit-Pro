@@ -6,6 +6,12 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **Background email jobs** (Module 20): when `REDIS_URL` is set, transactional
+  emails (verification, reset, magic link, OTP, invites) are queued to BullMQ and
+  sent by a background worker off the request path, with retries and exponential
+  backoff. Without Redis — or if enqueue fails — email is sent inline, so the
+  default and test behavior is unchanged. The worker starts at boot and drains on
+  graceful shutdown.
 - **Redis-backed rate limiting** (Module 20): when `REDIS_URL` is set, rate
   limits are stored in Redis so they hold across multiple server instances; the
   store fails open (allows the request, logs a warning) if Redis is briefly

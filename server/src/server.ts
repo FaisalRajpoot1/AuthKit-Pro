@@ -1,6 +1,7 @@
 import type { Server } from 'node:http';
 import { createApp } from './app';
 import { env } from './config/env';
+import { closeEmailJobs, startEmailWorker } from './jobs/email.queue';
 import { logger } from './lib/logger';
 import { prisma } from './lib/prisma';
 import { closeRedis } from './lib/redis';
@@ -10,6 +11,9 @@ async function bootstrap(): Promise<void> {
   // Verify the database connection before accepting traffic.
   await prisma.$connect();
   logger.info('Database connection established');
+
+  // Drain queued emails in the background (no-op unless Redis is configured).
+  startEmailWorker();
 
   const app = createApp();
   const server: Server = app.listen(env.PORT, () => {
@@ -23,7 +27,7 @@ function setupGracefulShutdown(server: Server): void {
   const shutdown = (signal: string): void => {
     logger.info(`${signal} received — shutting down gracefully`);
     server.close(() => {
-      void Promise.allSettled([prisma.$disconnect(), closeRedis()]).finally(() => {
+      void Promise.allSettled([closeEmailJobs(), prisma.$disconnect(), closeRedis()]).finally(() => {
         logger.info('Shutdown complete');
         process.exit(0);
       });

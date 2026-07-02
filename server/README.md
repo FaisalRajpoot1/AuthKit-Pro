@@ -54,7 +54,9 @@ src/
   session, revokes the rest), change email (confirmed via the new address),
   soft-delete account, and pre-registration username/email availability check.
 - **Email service**: pluggable transport — SMTP (Nodemailer) when configured,
-  console logging in development.
+  console logging in development. When `REDIS_URL` is set, sends are queued to a
+  **BullMQ** worker (off the request path, retried with backoff); otherwise they
+  go out inline.
 
 ## Phase 3 — implemented
 
