@@ -6,6 +6,12 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **Client UI catch-up**: the React app now surfaces recently-added backend
+  features — all eight OAuth providers on the sign-in / connect-accounts screens,
+  an **SMS 2FA** section in account settings (register + verify a phone, remove
+  it) plus a "text me a code" option in the login challenge, an admin **Security**
+  tab to block/unblock IP addresses, and an optional **Turnstile CAPTCHA** widget
+  on login/register (shown only when `VITE_TURNSTILE_SITE_KEY` is set).
 - **Apple OAuth** (Module 4): "Sign in with Apple" completes the eight-provider
   set. Adds a form-post (POST) callback path — Apple returns via a cross-site
   POST that omits the SameSite state cookie, so that path trusts the signed

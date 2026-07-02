@@ -4,6 +4,7 @@ import { AuditTab } from '@/components/admin/AuditTab';
 import { OrganizationsTab } from '@/components/admin/OrganizationsTab';
 import { OverviewTab } from '@/components/admin/OverviewTab';
 import { RolesTab } from '@/components/admin/RolesTab';
+import { SecurityTab } from '@/components/admin/SecurityTab';
 import { UsersTab } from '@/components/admin/UsersTab';
 import { useAuth } from '@/features/auth/AuthContext';
 
@@ -25,6 +26,7 @@ export function AdminPage(): JSX.Element {
     { key: 'roles', label: 'Roles', permission: 'roles:read', render: () => <RolesTab canManage={canManageRoles} /> },
     { key: 'audit', label: 'Audit log', permission: 'audit_logs:read', render: () => <AuditTab /> },
     { key: 'orgs', label: 'Organizations', permission: 'organizations:manage', render: () => <OrganizationsTab /> },
+    { key: 'security', label: 'Security', permission: 'ip_blocks:read', render: () => <SecurityTab /> },
   ];
 
   const visibleTabs = tabs.filter((tab) => hasPermission(tab.permission));

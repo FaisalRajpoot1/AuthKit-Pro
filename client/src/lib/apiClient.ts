@@ -28,9 +28,21 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Latest CAPTCHA token from a challenge widget, attached to the next request and
+// then cleared (CAPTCHA tokens are single-use).
+let captchaToken: string | null = null;
+
+export function setCaptchaToken(token: string | null): void {
+  captchaToken = token;
+}
+
 apiClient.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  if (captchaToken) {
+    config.headers['X-Captcha-Token'] = captchaToken;
+    captchaToken = null;
   }
   return config;
 });

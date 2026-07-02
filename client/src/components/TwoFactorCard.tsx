@@ -6,8 +6,12 @@ import {
   disableTwoFactor,
   enableTwoFactor,
   getTwoFactorStatus,
+  removeSmsFactor,
+  setupSmsFactor,
   setupTwoFactor,
+  verifySmsFactor,
   type TwoFactorSetup,
+  type TwoFactorStatus,
 } from '@/features/two-factor/twoFactor.api';
 import { getApiErrorMessage } from '@/lib/apiError';
 
@@ -51,7 +55,12 @@ export function TwoFactorCard(): JSX.Element {
           </Button>
         </div>
       ) : status?.enabled ? (
-        <EnabledView remaining={status.backupCodesRemaining} onDisabled={refreshStatus} />
+        <>
+          <EnabledView remaining={status.backupCodesRemaining} onDisabled={refreshStatus} />
+          <div className="mt-6 border-t border-slate-100 pt-6">
+            <SmsFactorSection sms={status.sms} onChanged={refreshStatus} />
+          </div>
+        </>
       ) : setup ? (
         <EnrollView
           setup={setup}
@@ -132,6 +141,115 @@ function EnrollView({
           Cancel
         </button>
       </div>
+    </div>
+  );
+}
+
+function SmsFactorSection({
+  sms,
+  onChanged,
+}: {
+  sms: TwoFactorStatus['sms'];
+  onChanged: () => void | Promise<void>;
+}): JSX.Element {
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [stage, setStage] = useState<'idle' | 'verify'>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  const setupMut = useMutation({
+    mutationFn: () => setupSmsFactor(phone.trim()),
+    onSuccess: () => {
+      setError(null);
+      setStage('verify');
+    },
+    onError: (err) => setError(getApiErrorMessage(err, 'Could not send a code')),
+  });
+  const verifyMut = useMutation({
+    mutationFn: () => verifySmsFactor(code.trim()),
+    onSuccess: async () => {
+      setStage('idle');
+      setPhone('');
+      setCode('');
+      await onChanged();
+    },
+    onError: (err) => setError(getApiErrorMessage(err, 'Invalid code')),
+  });
+  const removeMut = useMutation({
+    mutationFn: removeSmsFactor,
+    onSuccess: () => onChanged(),
+    onError: (err) => setError(getApiErrorMessage(err, 'Could not remove SMS')),
+  });
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-slate-800">Text message (SMS)</h3>
+        {sms.enabled ? (
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+            {sms.phone}
+          </span>
+        ) : null}
+      </div>
+
+      {sms.enabled ? (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-600">Receive sign-in codes by text as a backup.</p>
+          <button
+            type="button"
+            onClick={() => removeMut.mutate()}
+            disabled={removeMut.isPending}
+            className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+          >
+            Remove
+          </button>
+        </div>
+      ) : stage === 'idle' ? (
+        <>
+          <p className="text-sm text-slate-600">
+            Add a phone number to receive sign-in codes by text as a backup factor.
+          </p>
+          <TextField
+            label="Phone number"
+            placeholder="+14155552671"
+            autoComplete="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+          <div>
+            <Button type="button" onClick={() => setupMut.mutate()} loading={setupMut.isPending}>
+              Send code
+            </Button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-slate-600">Enter the 6-digit code we texted to {phone}.</p>
+          <TextField
+            label="6-digit code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <Button type="button" onClick={() => verifyMut.mutate()} loading={verifyMut.isPending}>
+              Verify
+            </Button>
+            <button
+              type="button"
+              onClick={() => {
+                setStage('idle');
+                setError(null);
+              }}
+              className="text-sm text-slate-500 hover:underline"
+            >
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
     </div>
   );
 }

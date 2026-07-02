@@ -81,6 +81,10 @@ export async function requestTwoFactorEmailOtp(challengeToken: string): Promise<
   await apiClient.post('/auth/2fa/email-otp/request', { challengeToken });
 }
 
+export async function requestTwoFactorSmsOtp(challengeToken: string): Promise<void> {
+  await apiClient.post('/auth/2fa/sms-otp/request', { challengeToken });
+}
+
 export async function logout(): Promise<void> {
   await apiClient.post('/auth/logout');
   setAccessToken(null);

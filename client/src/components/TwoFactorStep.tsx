@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthShell } from '@/components/AuthShell';
 import { Button, TextField } from '@/components/ui';
-import { requestTwoFactorEmailOtp } from '@/features/auth/auth.api';
+import { requestTwoFactorEmailOtp, requestTwoFactorSmsOtp } from '@/features/auth/auth.api';
 import { useAuth } from '@/features/auth/AuthContext';
 import { getApiErrorMessage } from '@/lib/apiError';
 
@@ -34,6 +34,19 @@ export function TwoFactorStep({
       setEmailNotice('We emailed you a 6-digit code. Enter it above.');
     } catch (err) {
       setError(getApiErrorMessage(err, 'Could not send a code'));
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
+  const textMeACode = async (): Promise<void> => {
+    setError(null);
+    setEmailBusy(true);
+    try {
+      await requestTwoFactorSmsOtp(challengeToken);
+      setEmailNotice('We texted you a 6-digit code. Enter it above.');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'No verified phone on file, or SMS is unavailable'));
     } finally {
       setEmailBusy(false);
     }
@@ -83,14 +96,24 @@ export function TwoFactorStep({
         <Button type="submit" loading={submitting}>
           Verify
         </Button>
-        <button
-          type="button"
-          onClick={emailMeACode}
-          disabled={emailBusy}
-          className="text-center text-sm font-medium text-indigo-600 hover:underline disabled:opacity-50"
-        >
-          {emailBusy ? 'Sending…' : 'Trouble with your authenticator? Email me a code'}
-        </button>
+        <div className="flex flex-col gap-1">
+          <button
+            type="button"
+            onClick={emailMeACode}
+            disabled={emailBusy}
+            className="text-center text-sm font-medium text-indigo-600 hover:underline disabled:opacity-50"
+          >
+            {emailBusy ? 'Sending…' : 'Trouble with your authenticator? Email me a code'}
+          </button>
+          <button
+            type="button"
+            onClick={textMeACode}
+            disabled={emailBusy}
+            className="text-center text-sm font-medium text-indigo-600 hover:underline disabled:opacity-50"
+          >
+            Text me a code instead
+          </button>
+        </div>
         <button
           type="button"
           onClick={onCancel}

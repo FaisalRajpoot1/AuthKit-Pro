@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthShell } from '@/components/AuthShell';
+import { CaptchaField } from '@/components/CaptchaField';
 import { OAuthButtons } from '@/components/OAuthButtons';
 import { TwoFactorStep } from '@/components/TwoFactorStep';
 import { Button, TextField } from '@/components/ui';
@@ -82,6 +83,7 @@ export function LoginPage(): JSX.Element {
             Forgot password?
           </Link>
         </div>
+        <CaptchaField />
         <Button type="submit" loading={isSubmitting}>
           Sign in
         </Button>

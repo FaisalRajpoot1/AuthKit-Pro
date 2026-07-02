@@ -124,3 +124,31 @@ export async function listAdminOrganizations(
   const { data } = await apiClient.get<Page<AdminOrganization>>('/admin/organizations', { params });
   return data;
 }
+
+// ── IP blocking ────────────────────────────────────────────────────────────
+
+export interface BlockedIp {
+  id: string;
+  ipAddress: string;
+  reason: string | null;
+  createdBy: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export async function listBlockedIps(): Promise<BlockedIp[]> {
+  const { data } = await apiClient.get<{ blockedIps: BlockedIp[] }>('/admin/blocked-ips');
+  return data.blockedIps;
+}
+
+export async function blockIp(input: {
+  ipAddress: string;
+  reason?: string | undefined;
+}): Promise<BlockedIp> {
+  const { data } = await apiClient.post<{ blockedIp: BlockedIp }>('/admin/blocked-ips', input);
+  return data.blockedIp;
+}
+
+export async function unblockIp(id: string): Promise<void> {
+  await apiClient.delete(`/admin/blocked-ips/${id}`);
+}

@@ -1,6 +1,14 @@
 import { apiClient } from '@/lib/apiClient';
 
-export type OAuthProvider = 'GOOGLE' | 'GITHUB' | 'MICROSOFT' | 'DISCORD';
+export type OAuthProvider =
+  | 'GOOGLE'
+  | 'GITHUB'
+  | 'MICROSOFT'
+  | 'DISCORD'
+  | 'FACEBOOK'
+  | 'LINKEDIN'
+  | 'TWITTER'
+  | 'APPLE';
 
 export interface LinkedAccount {
   provider: OAuthProvider;
@@ -45,4 +53,8 @@ export const PROVIDER_LABELS: Record<OAuthProvider, string> = {
   GITHUB: 'GitHub',
   MICROSOFT: 'Microsoft',
   DISCORD: 'Discord',
+  FACEBOOK: 'Facebook',
+  LINKEDIN: 'LinkedIn',
+  TWITTER: 'X',
+  APPLE: 'Apple',
 };

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, TextField } from '@/components/ui';
+import { CaptchaField } from '@/components/CaptchaField';
 import { OAuthButtons } from '@/components/OAuthButtons';
 import { useAuth } from '@/features/auth/AuthContext';
 import { registerFormSchema, type RegisterFormValues } from '@/features/auth/auth.types';
@@ -64,6 +65,7 @@ export function RegisterPage(): JSX.Element {
             {formError}
           </p>
         ) : null}
+        <CaptchaField />
         <Button type="submit" loading={isSubmitting}>
           Create account
         </Button>
