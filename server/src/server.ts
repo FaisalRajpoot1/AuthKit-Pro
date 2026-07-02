@@ -3,6 +3,7 @@ import { createApp } from './app';
 import { env } from './config/env';
 import { logger } from './lib/logger';
 import { prisma } from './lib/prisma';
+import { closeRedis } from './lib/redis';
 
 /** Composition root: start the HTTP server and wire graceful shutdown. */
 async function bootstrap(): Promise<void> {
@@ -22,7 +23,7 @@ function setupGracefulShutdown(server: Server): void {
   const shutdown = (signal: string): void => {
     logger.info(`${signal} received — shutting down gracefully`);
     server.close(() => {
-      void prisma.$disconnect().finally(() => {
+      void Promise.allSettled([prisma.$disconnect(), closeRedis()]).finally(() => {
         logger.info('Shutdown complete');
         process.exit(0);
       });

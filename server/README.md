@@ -29,6 +29,8 @@ src/
 - Refresh-token **rotation** with **reuse detection** (whole family revoked on replay)
 - Argon2id password hashing, timing-safe login, account-enumeration resistance
 - Zod request validation, Helmet, CORS (credentialed), per-route rate limiting
+  (**Redis-backed** when `REDIS_URL` is set — shared across instances, fails open
+  if Redis is briefly unreachable; otherwise an in-process store)
 - Centralized error handling with stable error codes
 - **Brute-force protection**: failed logins are tracked; an account locks for a
   window after repeated failures (admins can unlock)

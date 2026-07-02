@@ -6,6 +6,12 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **Redis-backed rate limiting** (Module 20): when `REDIS_URL` is set, rate
+  limits are stored in Redis so they hold across multiple server instances; the
+  store fails open (allows the request, logs a warning) if Redis is briefly
+  unreachable. With no `REDIS_URL` the limiter keeps its in-process memory store,
+  so single-instance and test setups are unchanged. Adds a resilient shared Redis
+  client (lazy, best-effort) reused by future background jobs.
 - **More OAuth providers** (Module 4): added Facebook Login and "Sign in with
   LinkedIn" (OpenID Connect), bringing the shipped set to six (Google, GitHub,
   Microsoft, Discord, Facebook, LinkedIn) via the pluggable provider strategy.

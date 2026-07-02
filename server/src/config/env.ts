@@ -95,6 +95,10 @@ const envSchema = z.object({
   LINKEDIN_CLIENT_ID: z.string().optional(),
   LINKEDIN_CLIENT_SECRET: z.string().optional(),
 
+  // Optional Redis. When set, rate limiting uses a shared Redis store so limits
+  // hold across multiple server instances; otherwise an in-process store is used.
+  REDIS_URL: z.string().url().optional(),
+
   // Email delivery. When SMTP_HOST is unset, emails are logged to the console
   // (development) instead of sent — handy for local flows without a mailserver.
   EMAIL_FROM: z.string().default('AuthKit Pro <no-reply@authkit.local>'),
