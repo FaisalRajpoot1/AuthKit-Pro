@@ -6,7 +6,9 @@ import {
   magicLinkTemplate,
   organizationInviteTemplate,
   passwordResetTemplate,
+  suspiciousLoginTemplate,
   verifyEmailTemplate,
+  welcomeTemplate,
 } from './templates';
 
 function link(path: string, token: string): string {
@@ -49,5 +51,16 @@ export const emailService = {
 
   async sendLoginOtpEmail(to: string, code: string): Promise<void> {
     await dispatchEmail(loginOtpTemplate(to, code));
+  },
+
+  async sendWelcomeEmail(to: string, name: string | null): Promise<void> {
+    await dispatchEmail(welcomeTemplate(to, name));
+  },
+
+  async sendSuspiciousLoginEmail(
+    to: string,
+    details: { ipAddress: string | null; userAgent: string | null; when: string },
+  ): Promise<void> {
+    await dispatchEmail(suspiciousLoginTemplate(to, details));
   },
 };

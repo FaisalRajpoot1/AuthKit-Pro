@@ -1,5 +1,6 @@
 import type { Prisma, RefreshToken, Session, User } from '@prisma/client';
 import { signAccessToken, signTwoFactorChallenge, verifyTwoFactorChallenge } from '../../lib/jwt';
+import { emailService } from '../../lib/email/email.service';
 import { logger } from '../../lib/logger';
 import { hashPassword, verifyPassword } from '../../lib/password';
 import { assertPasswordNotPwned } from '../../lib/pwnedPasswords';
@@ -26,6 +27,7 @@ import {
   recordLoginAttempt,
   registerFailedAttempt,
 } from './lockout';
+import { checkSuspiciousLogin } from './suspiciousLogin';
 import type { LoginInput, RegisterInput, TwoFactorLoginInput } from './auth.schema';
 import {
   type AuthResult,
@@ -101,11 +103,12 @@ export async function register(input: RegisterInput, context: RequestContext): P
   logger.info({ userId: user.id }, 'User registered');
   await recordAudit({ action: 'USER_REGISTERED', userId: user.id, context });
 
-  // Best-effort: a failed verification email must not fail registration.
+  // Best-effort: a failed verification/welcome email must not fail registration.
   try {
     await issueEmailVerification(user.id, user.email);
+    await emailService.sendWelcomeEmail(user.email, user.displayName);
   } catch (error) {
-    logger.error({ err: error, userId: user.id }, 'Failed to send verification email');
+    logger.error({ err: error, userId: user.id }, 'Failed to send registration email');
   }
 
   return { user: toUserDto(user), tokens };
@@ -168,6 +171,9 @@ export async function login(
   }
 
   await clearFailedAttempts(user);
+  // Check against prior history BEFORE recording this attempt, so a new device
+  // is detected relative to past sign-ins only.
+  await checkSuspiciousLogin(user, context);
   await recordLoginAttempt({ email: user.email, userId: user.id, successful: true, context });
   return finalizeLogin(user, context, options.trustedDeviceToken);
 }

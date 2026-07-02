@@ -98,6 +98,45 @@ export function loginOtpTemplate(to: string, code: string): EmailMessage {
   };
 }
 
+export function welcomeTemplate(to: string, name: string | null): EmailMessage {
+  const greeting = name ? `Hi ${name},` : 'Hi there,';
+  return {
+    to,
+    subject: 'Welcome to AuthKit Pro',
+    html: layout(
+      'Welcome to AuthKit Pro',
+      `<p>${greeting}</p>
+       <p>Your account is ready. You can enable two-factor authentication, connect
+        social logins, and manage your devices any time from your account settings.</p>
+       <p style="font-size:13px; color:#64748b;">Glad to have you on board.</p>`,
+    ),
+    text: `${greeting}\n\nWelcome to AuthKit Pro! Your account is ready. You can enable two-factor authentication, connect social logins, and manage your devices from your account settings.`,
+  };
+}
+
+export function suspiciousLoginTemplate(
+  to: string,
+  details: { ipAddress: string | null; userAgent: string | null; when: string },
+): EmailMessage {
+  const rows = `
+    <p style="font-size:14px; color:#334155; margin:4px 0;">Time: ${details.when}</p>
+    <p style="font-size:14px; color:#334155; margin:4px 0;">IP address: ${details.ipAddress ?? 'unknown'}</p>
+    <p style="font-size:14px; color:#334155; margin:4px 0;">Device: ${details.userAgent ?? 'unknown'}</p>`;
+  return {
+    to,
+    subject: 'New sign-in to your AuthKit Pro account',
+    html: layout(
+      'New sign-in detected',
+      `<p>We noticed a sign-in to your account from a device or location we haven't
+        seen before.</p>
+       ${rows}
+       <p style="margin-top:16px;">If this was you, no action is needed. If not, change
+        your password and review your active sessions right away.</p>`,
+    ),
+    text: `New sign-in to your AuthKit Pro account.\n\nTime: ${details.when}\nIP address: ${details.ipAddress ?? 'unknown'}\nDevice: ${details.userAgent ?? 'unknown'}\n\nIf this wasn't you, change your password and review your active sessions.`,
+  };
+}
+
 export function emailChangeTemplate(to: string, url: string): EmailMessage {
   return {
     to,

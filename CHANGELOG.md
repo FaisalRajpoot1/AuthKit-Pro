@@ -6,6 +6,11 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **Welcome & suspicious-login emails** (Modules 10/14): new registrations get a
+  welcome email; a sign-in from a device/IP the account hasn't used before sends
+  a security alert (email + in-app notification). Detection is conservative
+  (flags only when both the IP and device are new) and best-effort — it never
+  blocks login, and a user's first sign-in is never flagged.
 - **Client UI catch-up**: the React app now surfaces recently-added backend
   features — all eight OAuth providers on the sign-in / connect-accounts screens,
   an **SMS 2FA** section in account settings (register + verify a phone, remove
