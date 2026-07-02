@@ -91,9 +91,9 @@ src/
   (`/auth/2fa/sms-otp/request`). Pluggable SMS transport — Twilio when configured,
   console logging in development. Codes are single-use, expiring, attempt-capped.
 
-## Phase 4B — OAuth (Google · GitHub · Microsoft · Discord · Facebook · LinkedIn · X)
+## Phase 4B — OAuth (Google · GitHub · Microsoft · Discord · Facebook · LinkedIn · X · Apple)
 
-- **Sign in / sign up with Google, GitHub, Microsoft, Discord, Facebook, LinkedIn, or X.** Existing accounts are matched by
+- **Sign in / sign up with Google, GitHub, Microsoft, Discord, Facebook, LinkedIn, X, or Apple.** Existing accounts are matched by
   verified email and linked automatically; otherwise a new account is created
   (random password the user can reset later).
 - **Account linking/unlinking** for signed-in users. Unlink is refused if it
@@ -106,11 +106,12 @@ src/
 - **PKCE** (Proof Key for Code Exchange, S256) is supported per-provider: the
   flow mints a verifier, stores it inside the signed state token, and sends the
   derived challenge in the authorization URL.
-- Providers are a pluggable strategy (`OAuthProviderClient`); seven are shipped.
-  **X (Twitter)** uses OAuth2 + PKCE — note its API returns no email, so X links
-  to an existing account rather than creating one from scratch. **Apple**
-  (signed-JWT client secret + form-post callback) is the remaining provider. A
-  provider is active only when its client id/secret are configured.
+- Providers are a pluggable strategy (`OAuthProviderClient`); **all eight** are
+  shipped (Google, GitHub, Microsoft, Discord, Facebook, LinkedIn, X, Apple).
+  **X (Twitter)** uses OAuth2 + PKCE — its API returns no email, so X links to an
+  existing account rather than creating one. **Apple** uses a form-post (POST)
+  callback and an ES256 signed-JWT client secret (minted per token exchange). A
+  provider is active only when its credentials are configured.
 
 ## Phase 5A — RBAC & Permission System
 

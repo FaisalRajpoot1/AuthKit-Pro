@@ -18,6 +18,13 @@ export interface OAuthProviderClient {
    * authorization URL and the verifier is echoed back at code exchange.
    */
   readonly usesPkce?: boolean;
+  /**
+   * Whether the provider posts its callback with `response_mode=form_post` (a
+   * cross-site POST). Such a request does not carry our SameSite state cookie, so
+   * the callback relies on the signed state's own integrity instead of the
+   * cookie double-submit.
+   */
+  readonly usesFormPost?: boolean;
   /** Whether the provider has the necessary client credentials configured. */
   isConfigured(): boolean;
   getAuthorizationUrl(params: {

@@ -15,3 +15,5 @@ oauthRouter.delete('/:provider', requireAuth, asyncHandler(controller.unlink));
 // Public: begin sign-in and handle the provider redirect.
 oauthRouter.get('/:provider/url', authRateLimiter, controller.getLoginUrl);
 oauthRouter.get('/:provider/callback', asyncHandler(controller.callback));
+// Form-post providers (e.g. Apple) return via a cross-site POST.
+oauthRouter.post('/:provider/callback', asyncHandler(controller.callbackFormPost));

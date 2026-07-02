@@ -6,6 +6,12 @@ phased development roadmap; versions are pre-1.0 while the platform stabilizes.
 ## [Unreleased]
 
 ### Features
+- **Apple OAuth** (Module 4): "Sign in with Apple" completes the eight-provider
+  set. Adds a form-post (POST) callback path — Apple returns via a cross-site
+  POST that omits the SameSite state cookie, so that path trusts the signed
+  state's own integrity instead of the cookie double-submit. The client secret is
+  an ES256 JWT minted per token exchange from the .p8 key; identity (sub + email)
+  is read from the returned id_token.
 - **SMS OTP as a 2FA factor** (Module 5): register and verify a phone number,
   then receive one-time sign-in codes by SMS during the 2FA challenge — an
   alternative to the authenticator, backup codes, or email OTP. Pluggable SMS

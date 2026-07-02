@@ -96,6 +96,13 @@ const envSchema = z.object({
   LINKEDIN_CLIENT_SECRET: z.string().optional(),
   TWITTER_CLIENT_ID: z.string().optional(),
   TWITTER_CLIENT_SECRET: z.string().optional(),
+  // Apple "Sign in with Apple". The client secret is an ES256 JWT signed with the
+  // downloaded .p8 key; APPLE_PRIVATE_KEY holds that key's PEM contents (\n or
+  // real newlines). APPLE_CLIENT_ID is the Services ID.
+  APPLE_CLIENT_ID: z.string().optional(),
+  APPLE_TEAM_ID: z.string().optional(),
+  APPLE_KEY_ID: z.string().optional(),
+  APPLE_PRIVATE_KEY: z.string().optional(),
 
   // SMS delivery (Twilio) for SMS-based 2FA. Leave the SID/token blank to log
   // SMS to the console (development) instead of sending.

@@ -18,8 +18,8 @@ describe('oauth routes', () => {
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 
-  it('recognizes microsoft/discord/facebook/linkedin/twitter providers (400 when unconfigured)', async () => {
-    for (const provider of ['microsoft', 'discord', 'facebook', 'linkedin', 'twitter']) {
+  it('recognizes microsoft/discord/facebook/linkedin/twitter/apple providers (400 when unconfigured)', async () => {
+    for (const provider of ['microsoft', 'discord', 'facebook', 'linkedin', 'twitter', 'apple']) {
       const res = await request(app).get(`/api/v1/auth/oauth/${provider}/url`);
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
@@ -38,6 +38,16 @@ describe('oauth routes', () => {
 
   it('redirects to the frontend with an error when state is missing on callback', async () => {
     const res = await request(app).get('/api/v1/auth/oauth/google/callback?code=abc&state=xyz');
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toContain('/oauth/callback');
+    expect(res.headers.location).toContain('status=error');
+  });
+
+  it('accepts a form-post (POST) callback and redirects on failure', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/oauth/apple/callback')
+      .type('form')
+      .send({ code: 'abc', state: 'bad-state' });
     expect(res.status).toBe(302);
     expect(res.headers.location).toContain('/oauth/callback');
     expect(res.headers.location).toContain('status=error');

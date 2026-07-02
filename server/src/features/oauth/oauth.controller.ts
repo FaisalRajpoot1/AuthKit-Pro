@@ -40,14 +40,18 @@ export function getLinkUrl(req: Request, res: Response): void {
 }
 
 /** Provider redirect target. On success/failure it bounces back to the SPA. */
-export async function callback(req: Request, res: Response): Promise<void> {
+/** Shared callback handling. `code`/`state` come from the query (GET) or body (POST). */
+async function handleProviderCallback(
+  req: Request,
+  res: Response,
+  code: string,
+  state: string,
+): Promise<void> {
   const cookieState = req.cookies?.[OAUTH_STATE_COOKIE_NAME] as string | undefined;
   clearOAuthStateCookie(res);
 
   try {
     const provider = parseProvider(req.params.provider as string);
-    const code = typeof req.query.code === 'string' ? req.query.code : '';
-    const state = typeof req.query.state === 'string' ? req.query.state : '';
     if (!code) {
       throw new Error('Missing authorization code');
     }
@@ -75,6 +79,20 @@ export async function callback(req: Request, res: Response): Promise<void> {
     logger.warn({ err: error }, 'OAuth callback failed');
     res.redirect(frontend('/oauth/callback', { status: 'error' }));
   }
+}
+
+/** Standard redirect (GET) callback used by most providers. */
+export async function callback(req: Request, res: Response): Promise<void> {
+  const code = typeof req.query.code === 'string' ? req.query.code : '';
+  const state = typeof req.query.state === 'string' ? req.query.state : '';
+  await handleProviderCallback(req, res, code, state);
+}
+
+/** Form-post (POST) callback used by providers like Apple. */
+export async function callbackFormPost(req: Request, res: Response): Promise<void> {
+  const code = typeof req.body?.code === 'string' ? req.body.code : '';
+  const state = typeof req.body?.state === 'string' ? req.body.state : '';
+  await handleProviderCallback(req, res, code, state);
 }
 
 export async function listAccounts(req: Request, res: Response): Promise<void> {

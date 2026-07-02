@@ -74,10 +74,13 @@ export async function handleCallback(params: {
   context: RequestContext;
 }): Promise<CallbackResult> {
   const { provider, code, state, cookieState, context } = params;
+  const client = getProviderClient(provider);
 
-  // CSRF: the state echoed by the provider must match the one we set in the
-  // httpOnly cookie, and must be a valid signed token for this provider.
-  if (!cookieState || cookieState !== state) {
+  // CSRF: for redirect (GET) providers, the state echoed back must match the one
+  // we set in the httpOnly cookie. Form-post providers (e.g. Apple) return via a
+  // cross-site POST that does not carry the SameSite cookie, so we rely on the
+  // signed state's own integrity (unforgeable + short-lived) instead.
+  if (!client.usesFormPost && (!cookieState || cookieState !== state)) {
     throw new UnauthorizedError('OAuth state mismatch');
   }
   const decoded = verifyOAuthState(state);
@@ -85,7 +88,7 @@ export async function handleCallback(params: {
     throw new UnauthorizedError('OAuth state mismatch');
   }
 
-  const profile = await getProviderClient(provider).exchangeCode({
+  const profile = await client.exchangeCode({
     code,
     redirectUri: redirectUri(provider),
     ...(decoded.codeVerifier ? { codeVerifier: decoded.codeVerifier } : {}),
